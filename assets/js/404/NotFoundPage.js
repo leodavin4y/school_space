@@ -1,6 +1,6 @@
 import React from "react";
 import {withRouter} from "react-router-dom";
-import {Panel} from "@vkontakte/vkui";
+import {Panel, Div, Link, Title} from "@vkontakte/vkui";
 
 class NotFoundPage extends React.Component {
     constructor(props) {
@@ -10,7 +10,10 @@ class NotFoundPage extends React.Component {
     render() {
         return (
             <Panel id="main">
-                <h1>Страница не существует...</h1>
+                <Div style={{ textAlign: 'center' }}>
+                    <Title level="1" weight="semibold" style={{ marginBottom: 16 }}>Страница не существует... Или что-то пошло не так :(</Title>
+                    Наша группа: <Link href="https://vk.com/schoolspaceru" target="_blank">Школьное пространство</Link>
+                </Div>
             </Panel>
         );
     }

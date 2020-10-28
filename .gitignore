@@ -7,3 +7,4 @@
 .env
 /bin/*
 /var/*
+webpack.default.config.js

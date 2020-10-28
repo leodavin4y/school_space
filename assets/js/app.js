@@ -35,15 +35,18 @@ const NotFoundPage = React.lazy(() => import('../js/404/NotFoundPage'));
 const parseAuthData = () => {
     const parser = new URLSearchParams(window.location.search);
     const result = {};
+    let length = 0;
 
     parser.forEach((value, key) => {
         if (key.substr(0, 3) !== 'vk_') return false;
         result[key] = value;
+        length++;
     });
 
     result['sign'] = parser.has('sign') ? parser.get('sign') : '';
+    result.vk_params_count = length;
 
-    return (result);
+    return result;
 };
 const auth = {
     isAuthenticated: false,
@@ -118,8 +121,10 @@ class App extends React.Component {
         super(props);
 
         const auth = parseAuthData();
+
         this.platform = 'vk_platform' in auth ? auth.vk_platform : null;
         this.mobile = this.platform && this.platform.indexOf('mobile') !== -1;
+        this.vk_params_count = auth.vk_params_count;
         this.auth = JSON.stringify(auth);
         props.mainStore.setIsMobile(this.mobile);
         props.mainStore.setAuth(this.auth);
@@ -297,6 +302,8 @@ class App extends React.Component {
     componentDidMount() {
         console.log('App mounted');
 
+        if (this.vk_params_count <= 1) return this.redirect('/404');
+
         const sub = () => {
             window.addEventListener('offline', this.showPlaceholder);
             window.addEventListener('online', this.hidePlaceholder);
@@ -332,12 +339,14 @@ class App extends React.Component {
     }
 
     render() {
+        const prefix = '';
+
         return (
             <Router>
                 <Suspense fallback={<ScreenSpinner />}>
                     <ConfigProvider isWebView={bridge.isWebView()} scheme={this.state.scheme}>
                         <Switch>
-                            <Route exact path="/">
+                            <Route exact path={`${prefix}/`}>
                                 <MainPage
                                     activeView={this.state.activeView}
                                     activePanel={this.state.activePanel}
@@ -347,7 +356,7 @@ class App extends React.Component {
                                 />
                             </Route>
 
-                            <Route exact path="/get-coins">
+                            <Route exact path={`${prefix}/get-coins`}>
                                 <GetCoinsPage
                                     activeView={this.state.activeView}
                                     activePanel={this.state.activePanel}
@@ -357,7 +366,7 @@ class App extends React.Component {
                                 />
                             </Route>
 
-                            <Route exact path="/stats">
+                            <Route exact path={`${prefix}/stats`}>
                                 <StatsPage
                                     activeView={this.state.activeView}
                                     activePanel={this.state.activePanel}
@@ -367,7 +376,7 @@ class App extends React.Component {
                                 />
                             </Route>
 
-                            <Route exact path="/admin/login">
+                            <Route exact path={`${prefix}/admin/login`}>
                                 <AdminLoginPage
                                     authenticate={auth.authenticate}
                                     signout={auth.signout}
@@ -375,7 +384,7 @@ class App extends React.Component {
                                 />
                             </Route>
 
-                            <PrivateRoute exact path="/admin/">
+                            <PrivateRoute exact path={`${prefix}/admin/`}>
                                 <DashboardPage
                                     activePanel={this.state.activePanel}
                                     activeView={this.state.activeView}
@@ -416,7 +425,3 @@ ReactDOM.render(
     </Provider>,
     document.getElementById("root")
 );
-
-if (process.env.NODE_ENV === "development") {
-    // import("eruda").then(({ default: eruda }) => {}); //runtime download
-}
