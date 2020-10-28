@@ -1,0 +1,9 @@
+/node_modules/*
+.idea/*
+.editorconfig
+/public/build/*
+/public/upload/*
+/vendor/*
+.env
+/bin/*
+/var/*

@@ -1,0 +1,107 @@
+#PointsReviewMenu {
+    padding-left: 0;
+    padding-right: 0;
+}
+#PointsReviewMenu li {
+    display: inline-block;
+    padding: 5px;
+}
+.infocell {
+    padding: 0 5px;
+}
+.btnwrap {
+    clear: both;
+}
+.imgwrap {
+    width: 100%;
+    display: inline-block;
+    padding: 5px 0;
+    clear: both;
+}
+.ReviewItem__bottom {
+    overflow: hidden;
+    width: 100%;
+}
+.ReviewItem__bottom-left {
+    width: 25px;
+    min-height: 50px;
+    float: left;
+}
+.ReviewItem__bottom-right {
+    width: calc(100% - 25px);
+    float: left;
+}
+.ReviewItem__top span {
+    padding: 5px;
+    font-size: 0.7rem;
+}
+.ReviewItem__left {
+    float: left;
+    min-width: 30px;
+}
+.ReviewItem__right {
+    float: left;
+    width: calc(100% - 65px);
+    padding-left: 5px;
+    line-height: 30px;
+}
+.ReviewItem__img {
+    width: 50px;
+    height: 50px;
+    float: left;
+    margin-right: 5px;
+    border-radius: 3px;
+    background-color: rgba(0,0,0,0.3);
+    border-color: #f8f9fa;
+    background-repeat: no-repeat;
+    background-size: contain;
+    background-position: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.ReviewItem__img:hover {
+    border-color: #333;
+    background-color: rgba(0,0,0,0.6);
+}
+.btn {
+    padding: 3px;
+    margin-right: 3px;
+    background: transparent;
+    color: var(--accent);
+    border: none;
+    box-shadow: none;
+}
+.btn[disabled] {
+    color: var(--text_primary);
+}
+.badge {
+    display: inline-block;
+    padding: 6px 8px;
+    border-radius: 15px;
+    line-height: 1;
+    font-size: 0.7rem;
+}
+.badge-secondary {
+    background:var(--button_secondary_background);
+}
+/**/
+.PhotoPreview__frame {
+    height: 100px;
+    width: 100px;
+    position: relative;
+    background: #ccc;
+    border-radius: 4px;
+    margin: 0 0 5px 0;
+}
+.PhotoPreview__frame img {
+    max-height: 100%;
+    max-width: 100%;
+    width: auto;
+    height: auto;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin: auto;
+}
