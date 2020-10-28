@@ -307,22 +307,27 @@ class AdminController extends BaseApiController {
     /**
      * Отклонить заявку на проверку оценок.
      *
-     * @Route("/admin/points/cancel", methods={"POST"}, name="admin_cancel_points")
+     * @Route("/admin/points/{id}/cancel", methods={"POST"}, name="admin_cancel_points")
      *
+     * @param int $id
      * @param ValidatorInterface $validator
      * @param PointsRepository $pointsRep
      * @param VKAPI $vk
      * @return JsonResponse
      */
-    public function cancelPoints(ValidatorInterface $validator, PointsRepository $pointsRep, VKAPI $vk): JsonResponse
+    public function cancelPoints(int $id, ValidatorInterface $validator, PointsRepository $pointsRep, VKAPI $vk): JsonResponse
     {
         $params = $this->postJson;
         $constraints = new Assert\Collection([
             'fields' => [
-                'id' => [
+                'comment' => [
                     new Assert\NotBlank(),
-                    new Assert\Type('int'),
-                ],
+                    new Assert\Type('string'),
+                    new Assert\Length([
+                        'min' => 1,
+                        'max' => 255
+                    ])
+                ]
             ],
             'allowExtraFields' => true
         ]);
@@ -330,11 +335,12 @@ class AdminController extends BaseApiController {
 
         if (count($errors) > 0) throw new HttpException(422, 'Validation error');
 
-        $point = $pointsRep->find($params['id']);
+        $point = $pointsRep->find($id);
 
         if (!$point) throw new HttpException(422, 'Point not found');
 
         $point->setCancel(1);
+        $point->setCancelComment($params['comment']);
 
         $this->em->persist($point);
         $this->em->flush();
@@ -342,7 +348,8 @@ class AdminController extends BaseApiController {
         try {
             $vk->sendMsg(
                 $point->getUser()->getUserId(),
-                "Ваша заявка на получение умникоинов за оценки #{$params['id']} отклонена администратором :(\n\n" .
+                "Ваша заявка на получение умникоинов за оценки #{$id} отклонена\n\n" .
+                "Комментарий администратора: «{$params['comment']}»‎\n\n" .
                 "Вы можете попытаться отправить оценки заново"
             );
         } catch (\Exception $e) {}

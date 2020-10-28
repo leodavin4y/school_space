@@ -2,7 +2,6 @@ import React from "react";
 import {
     ActionSheet,
     ActionSheetItem,
-    Button,
     Div,
     IOS,
     Link,
@@ -17,7 +16,6 @@ import moment from 'moment';
 import {inject, observer} from "mobx-react";
 import PropTypes from 'prop-types';
 import {declOfNum} from "../../utils";
-import Icon16MoreHorizontal from '@vkontakte/icons/dist/16/more_horizontal';
 import Icon16Dropdown from '@vkontakte/icons/dist/12/dropdown';
 
 @inject("mainStore")
@@ -91,11 +89,18 @@ class ReviewItem extends React.Component {
     };
 
     declineRequest = (pointId, {onSnack, onDeclineRequest} = this.props) => {
+        const comment = prompt('Введите комментарий для ученика').trim();
+
+        if (comment === '') {
+            alert('Комментарий не может быть пуст');
+            return false;
+        }
+
         axios({
             method: 'post',
-            url: '/admin/points/cancel',
+            url: `/admin/points/${pointId}/cancel`,
             data: {
-                id: pointId,
+                comment: comment,
                 auth: this.props.mainStore.auth
             }
         }).then(r => {
