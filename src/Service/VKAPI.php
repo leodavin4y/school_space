@@ -80,4 +80,25 @@ class VKAPI {
 
         return $profiles->response;
     }
+
+    /**
+     * @param int $userId
+     * @param string $msg
+     * @return int
+     * @throws \Exception
+     */
+    public static function sendMsg(int $userId, string $msg): int
+    {
+        $send = self::method('messages.send', [
+            'user_id' => $userId,
+            'random_id' => $_ENV['APP_ID'] + time(),
+            'message' => $msg,
+            'access_token' => $_ENV['GROUP_TOKEN'],
+            'v' => 5.124
+        ]);
+
+        if (isset($send->error)) throw new \Exception($send->error->error_msg, $send->error->error_code);
+
+        return $send->response;
+    }
 }

@@ -13,6 +13,7 @@ use App\Repository\PromoCodesRepository;
 use App\Repository\TopUsersRepository;
 use App\Repository\UsersRepository;
 use App\Service\UploadFiles;
+use App\Service\Utils;
 use App\Service\VKAPI;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -153,6 +154,8 @@ class AdminController extends BaseApiController {
     }
 
     /**
+     * Получение оценок для интерфейса управления оценками
+     *
      * @Route("/admin/points/get", methods={"POST"}, name="admin_get_points")
      * @param ValidatorInterface $validator
      * @param PointsRepository $pointsRep
@@ -218,16 +221,19 @@ class AdminController extends BaseApiController {
     }
 
     /**
-     * Set or edit points
+     * Обработка присланной заявки на проверку оценок.
+     * Установить или изменить оценку
+     *
      * @Route("/admin/points/{action}", methods={"POST"}, name="admin_set_points", requirements={"action"="^(set|update){1}$"}, defaults={"action": "set"})
+     *
      * @param string $action
      * @param ValidatorInterface $validator
      * @param PointsRepository $pointsRep
-     * @param UsersRepository $usersRep
+     * @param VKAPI $vk
      * @throws \Exception
      * @return JsonResponse
      */
-    public function setPoints(string $action, ValidatorInterface $validator, PointsRepository $pointsRep, UsersRepository $usersRep): JsonResponse
+    public function setPoints(string $action, ValidatorInterface $validator, PointsRepository $pointsRep, VKAPI $vk): JsonResponse
     {
         $params = $this->postJson;
         $constraints = new Assert\Collection([
@@ -260,6 +266,12 @@ class AdminController extends BaseApiController {
         try {
             if ($action === 'set') {
                 $user->setBalance($user->getBalance() + $params['amount']);
+                $vk->sendMsg(
+                    $user->getUserId(),
+                    "Ваша заявка на получение умникоинов за оценки #{$params['id']} одобрена!\n\n" .
+                    '+ ' . Utils::declOfNum($params['amount'], ['%d умникоин', '%d умникоина', '%d умникоинов']) . "\n" .
+                    "Баланс: {$user->getBalance()}"
+                );
             } else {
                 $total = $pointsRep->sumUpAllPoints($user->getUserId(), $point->getId()) ?? 0;
                 $user->setBalance($total + $params['amount']);
@@ -284,8 +296,10 @@ class AdminController extends BaseApiController {
     }
 
     /**
-     * Decline request
+     * Отклонить заявку на проверку оценок.
+     *
      * @Route("/admin/points/cancel", methods={"POST"}, name="admin_cancel_points")
+     *
      * @param ValidatorInterface $validator
      * @param PointsRepository $pointsRep
      * @return JsonResponse
@@ -321,7 +335,10 @@ class AdminController extends BaseApiController {
     }
 
     /**
+     * Поиск пользователей/админов/забаненных по имени (с пагинацией)
+     *
      * @Route("/admin/{type}/search", methods={"POST"}, name="admin_users_search", requirements={"type"="^(users|admins|banned){1}$"}, defaults={"type": "admins"})
+     *
      * @param string $type
      * @param AdminsRepository $adminsRep
      * @param UsersRepository $usersRep
@@ -384,7 +401,10 @@ class AdminController extends BaseApiController {
     }
 
     /**
+     * Удаление администратора
+     *
      * @Route("/admin/users/{userId}/delete", methods={"POST"}, name="admin_users_delete")
+     *
      * @param int $userId
      * @param AdminsRepository $adminsRep
      * @return JsonResponse
@@ -402,7 +422,10 @@ class AdminController extends BaseApiController {
     }
 
     /**
+     * Получение счетчика админов/юзеров/забаненных
+     *
      * @Route("/admin/users/count", methods={"POST"}, name="admin_users_count")
+     *
      * @param AdminsRepository $adminsRep
      * @param UsersRepository $usersRep
      * @return JsonResponse
@@ -421,12 +444,10 @@ class AdminController extends BaseApiController {
     }
 
     /**
-     * @Route(
-     *     "/admin/users/{id}/{banAction}",
-     *     methods={"POST"},
-     *     name="admin_ban_user",
-     *     requirements={"banAction"="^(ban|unban){1}$"}, defaults={"banAction": "ban"}
-     * )
+     * Забанить пользователя
+     *
+     * @Route("/admin/users/{id}/{banAction}", methods={"POST"}, name="admin_ban_user", requirements={"banAction"="^(ban|unban){1}$"}, defaults={"banAction": "ban"})
+     *
      * @param int $id
      * @param string $banAction
      * @param UsersRepository $usersRep
@@ -447,7 +468,10 @@ class AdminController extends BaseApiController {
     }
 
     /**
+     * Удалить товар
+     *
      * @Route("/admin/products/{id}/delete", methods={"POST"}, name="admin_products_delete")
+     *
      * @param int $id
      * @param ProductsRepository $productsRep
      * @param Kernel $kernel
@@ -468,7 +492,10 @@ class AdminController extends BaseApiController {
     }
 
     /**
+     * Скрыть/показать товар в магазине
+     *
      * @Route("/admin/products/{id}/{seen}", methods={"POST"}, name="admin_products_disable", requirements={"seen"="^(disable|enable){1}$"}, defaults={"seen": "disable"})
+     *
      * @param int $id
      * @param string $seen
      * @param ProductsRepository $productsRep
@@ -489,7 +516,10 @@ class AdminController extends BaseApiController {
     }
 
     /**
+     * Создать/изменить товар
+     *
      * @Route("/admin/product/{action}", name="admin_product_store", requirements={"action"="^(store|update){1}$"}, defaults={"action": "store"})
+     *
      * @param string $action
      * @param ValidatorInterface $validator
      * @param UploadFiles $uploadFiles
@@ -611,7 +641,10 @@ class AdminController extends BaseApiController {
     }
 
     /**
+     * Получить список промокодов
+     *
      * @Route("/admin/products/{productId}/promo-codes/get", name="admin_promo-codes_get")
+     *
      * @param int $productId
      * @param ProductsRepository $productsRep
      * @param SerializerHelper $serializerHelper
@@ -632,7 +665,10 @@ class AdminController extends BaseApiController {
     }
 
     /**
+     * Удалить промокод у продукта
+     *
      * @Route("/admin/products/{productId}/promo-codes/{promoCodeId}/delete", name="admin_promo-codes_delete")
+     *
      * @param int $productId
      * @param int $promoCodeId
      * @param ProductsRepository $productsRep
@@ -660,7 +696,10 @@ class AdminController extends BaseApiController {
     }
 
     /**
+     * Создать промокод для продукта
+     *
      * @Route("/admin/products/{productId}/promo-codes/store", name="admin_promo-codes_store")
+     *
      * @param int $productId
      * @param ProductsRepository $productsRep
      * @param ValidatorInterface $validator
@@ -713,7 +752,10 @@ class AdminController extends BaseApiController {
     }
 
     /**
+     * Получить список новых/обработанных заказов
+     *
      * @Route("/admin/orders/{type}/get", name="admin_orders_get", requirements={"type"="^(active|processed){1}$"}, defaults={"type": "active"})
+     *
      * @param string $type
      * @param OrdersRepository $ordersRep
      * @param SerializerHelper $serializerHelper
@@ -763,7 +805,10 @@ class AdminController extends BaseApiController {
     }
 
     /**
+     * Пометить заказ как обработанный
+     *
      * @Route("/admin/orders/{id}/complete", name="admin_orders_complete")
+     *
      * @param int $id
      * @param OrdersRepository $ordersRep
      * @return JsonResponse
@@ -783,7 +828,10 @@ class AdminController extends BaseApiController {
     }
 
     /**
+     * Установить/изменить баланс пользователя
+     *
      * @Route("/admin/users/{userId}/balance/set", name="admin_user_balance_set")
+     *
      * @param int $userId
      * @param ValidatorInterface $validator
      * @param UsersRepository $usersRep
