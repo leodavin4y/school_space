@@ -15,6 +15,7 @@ use App\Repository\UsersRepository;
 use App\Service\UploadFiles;
 use App\Service\Utils;
 use App\Service\VKAPI;
+use App\Service\Letscover;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -270,9 +271,13 @@ class AdminController extends BaseApiController {
         try {
             if ($action === 'set') {
                 $user->setBalance($user->getBalance() + $params['amount']);
+                $sendToApi = Letscover::addBalance($user->getUserId(), $params['amount']);
+
+                if (!$sendToApi) throw new \Exception('Failed to set letscover balance');
             } else {
-                $total = $pointsRep->sumUpAllPoints($user->getUserId(), $point->getId()) ?? 0;
-                $user->setBalance($total + $params['amount']);
+                $balance = $user->getBalance() - $point->getAmount();
+                $balance = $balance + $params['amount'];
+                $user->setBalance($balance > 0 ? $balance : 0);
             }
 
             $point->setAmount($params['amount']);

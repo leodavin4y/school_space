@@ -19,6 +19,7 @@ use App\Service\UploadFiles;
 use App\Service\SerializerHelper;
 use App\Service\VKAPI;
 use App\Service\Utils;
+use App\Service\Letscover;
 use App\Entity\Users;
 use App\Entity\Points;
 use App\Entity\PointsPhotos;
@@ -241,15 +242,13 @@ class ApiController extends BaseApiController {
      *
      * @Route("/api/profile/store", methods={"POST"}, name="api_profile_store")
      * @param ValidatorInterface $validator
-     * @param VKAPI $VKAPI
      * @param UsersRepository $usersRep
      * @return JsonResponse
      * @throws \Exception
      */
-    public function profileStore(ValidatorInterface $validator, VKAPI $VKAPI, UsersRepository $usersRep)
+    public function profileStore(ValidatorInterface $validator, UsersRepository $usersRep)
     {
-        if (is_null($this->uid))
-            throw new HttpException(403, 'Access forbidden. Expected param: vk_user_id');
+        if (is_null($this->uid)) throw new HttpException(403, 'Access forbidden. Expected param: vk_user_id');
 
         $params = $this->postJson;
         $constraints = new Assert\Collection([
@@ -286,7 +285,6 @@ class ApiController extends BaseApiController {
             ],
             'allowExtraFields' => true
         ]);
-
         $errors = $validator->validate($params, $constraints);
 
         if (count($errors) > 0) throw new HttpException(422, 'Validation error');
@@ -300,18 +298,21 @@ class ApiController extends BaseApiController {
             $student = new Users();
         }
 
-        $profile = $VKAPI::usersGet($uid)[0];
-        $student->setUserId($uid);
-        $student->setFirstName($profile->first_name);
-        $student->setLastName($profile->last_name);
-        $student->setPhoto100($profile->photo_100);
-        $student->setCity($params->city);
-        $student->setSchool($params->school);
-        $student->setClass($params->class);
-        $student->setTeacher($params->teacher);
+        $profile = VKAPI::usersGet($uid)[0];
+
+        $student->setUserId($uid)
+            ->setFirstName($profile->first_name)
+            ->setLastName($profile->last_name)
+            ->setPhoto100($profile->photo_100)
+            ->setCity($params->city)
+            ->setSchool($params->school)
+            ->setClass($params->class)
+            ->setTeacher($params->teacher);
 
         $em->persist($student);
         $em->flush();
+
+        Letscover::addBalance($uid, 0);
 
         return $this->createResponse();
     }
@@ -576,6 +577,10 @@ class ApiController extends BaseApiController {
 
         try {
             $user->setBalance($user->getBalance() - $product->getPrice());
+            $sendToApi = Letscover::subBalance($user->getUserId(), $product->getPrice());
+
+            if (!$sendToApi) throw new \Exception('Failed to set letscover balance');
+
             $product->setRemaining($product->getRemaining() - 1);
             $order = (new Orders())
                 ->setUser($user)
