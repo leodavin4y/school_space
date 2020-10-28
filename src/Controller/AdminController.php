@@ -69,6 +69,7 @@ class AdminController extends BaseApiController {
      * Вход в админку
      *
      * @Route("/admin/login", methods={"POST"}, name="admin_login")
+     *
      * @param PointsRepository $pointsRep
      * @param OrdersRepository $ordersRep
      * @return JsonResponse
@@ -89,6 +90,7 @@ class AdminController extends BaseApiController {
      * Регистрация нового админа
      *
      * @Route("/admin/register", methods={"POST"}, name="admin_register")
+     *
      * @param ValidatorInterface $validator
      * @param UsersRepository $usersRep
      * @param VKAPI $vk
@@ -139,6 +141,7 @@ class AdminController extends BaseApiController {
      * Разжалование админа
      *
      * @Route("/admin/admins/{id}/demote", methods={"POST"}, name="admin_demote")
+     *
      * @param int $id
      * @param AdminsRepository $adminsRep
      * @return JsonResponse
@@ -157,6 +160,7 @@ class AdminController extends BaseApiController {
      * Получение оценок для интерфейса управления оценками
      *
      * @Route("/admin/points/get", methods={"POST"}, name="admin_get_points")
+     *
      * @param ValidatorInterface $validator
      * @param PointsRepository $pointsRep
      * @return JsonResponse
@@ -266,12 +270,6 @@ class AdminController extends BaseApiController {
         try {
             if ($action === 'set') {
                 $user->setBalance($user->getBalance() + $params['amount']);
-                $vk->sendMsg(
-                    $user->getUserId(),
-                    "Ваша заявка на получение умникоинов за оценки #{$params['id']} одобрена!\n\n" .
-                    '+ ' . Utils::declOfNum($params['amount'], ['%d умникоин', '%d умникоина', '%d умникоинов']) . "\n" .
-                    "Баланс: {$user->getBalance()}"
-                );
             } else {
                 $total = $pointsRep->sumUpAllPoints($user->getUserId(), $point->getId()) ?? 0;
                 $user->setBalance($total + $params['amount']);
@@ -285,6 +283,17 @@ class AdminController extends BaseApiController {
 
             $em->flush();
             $connect->commit();
+
+            if ($action === 'set') {
+                try {
+                    $vk->sendMsg(
+                        $user->getUserId(),
+                        "Ваша заявка на получение умникоинов за оценки #{$params['id']} одобрена!\n\n" .
+                        '+ ' . Utils::declOfNum($params['amount'], ['%d умникоин', '%d умникоина', '%d умникоинов']) . "\n" .
+                        "Баланс: {$user->getBalance()}"
+                    );
+                } catch (\Exception $e) {}
+            }
         } catch (\Exception $e) {
             $connect->rollBack();
             throw $e;
@@ -302,9 +311,10 @@ class AdminController extends BaseApiController {
      *
      * @param ValidatorInterface $validator
      * @param PointsRepository $pointsRep
+     * @param VKAPI $vk
      * @return JsonResponse
      */
-    public function cancelPoints(ValidatorInterface $validator, PointsRepository $pointsRep): JsonResponse
+    public function cancelPoints(ValidatorInterface $validator, PointsRepository $pointsRep, VKAPI $vk): JsonResponse
     {
         $params = $this->postJson;
         $constraints = new Assert\Collection([
@@ -328,6 +338,14 @@ class AdminController extends BaseApiController {
 
         $this->em->persist($point);
         $this->em->flush();
+
+        try {
+            $vk->sendMsg(
+                $point->getUser()->getUserId(),
+                "Ваша заявка на получение умникоинов за оценки #{$params['id']} отклонена администратором :(\n\n" .
+                "Вы можете попытаться отправить оценки заново"
+            );
+        } catch (\Exception $e) {}
 
         return $this->createResponse([
             'id' => $point->getId()
