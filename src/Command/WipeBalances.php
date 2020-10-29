@@ -2,15 +2,16 @@
 
 namespace App\Command;
 
-use App\Repository\PointsRepository;
+use App\Repository\AdminsRepository;
 use App\Repository\UsersRepository;
 use App\Service\Letscover;
+use App\Service\VKAPI;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Doctrine\ORM\EntityManagerInterface;
 
-class ResetPoints extends Command
+class WipeBalances extends Command
 {
     // the name of the command (the part after "bin/console")
     protected static $defaultName = 'app:wipe-balances';
@@ -19,15 +20,19 @@ class ResetPoints extends Command
 
     private $usersRep;
 
+    private $adminsRep;
+
     public function __construct(
         EntityManagerInterface $entityManager,
         UsersRepository $usersRep,
+        AdminsRepository $adminsRep,
         ?string $name = null
     ) {
         parent::__construct($name);
 
         $this->em = $entityManager;
         $this->usersRep = $usersRep;
+        $this->adminsRep = $adminsRep;
     }
 
     protected function configure(){}
@@ -43,6 +48,14 @@ class ResetPoints extends Command
         }
 
         $this->usersRep->wipeBalances();
+
+        $admins = $this->adminsRep->findAll();
+
+        foreach ($admins as $admin) {
+            try {
+                VKAPI::sendMsg($admin->getUserId(), '[Обнуление умникоинов завершено]');
+            } catch (\Exception $e) {}
+        }
 
         return Command::SUCCESS;
     }

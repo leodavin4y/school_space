@@ -30,6 +30,7 @@ use App\Entity\Points;
 use App\Entity\PointsPhotos;
 use App\Repository\PointsRepository;
 use Doctrine\Common\Collections\Criteria;
+use Cocur\BackgroundProcess\BackgroundProcess;
 
 /**
  * Админка для управления данными приложения
@@ -917,6 +918,19 @@ class AdminController extends BaseApiController {
 
             throw $e;
         }
+
+        return $this->createResponse();
+    }
+
+    /**
+     * @Route("/admin/wipe", name="admin_wipe")
+     * @param Kernel $kernel
+     * @return JsonResponse
+     */
+    public function wipe(Kernel $kernel)
+    {
+        $process = new BackgroundProcess('php ' . $kernel->getProjectDir() . '/bin/console app:wipe-balances');
+        $process->run();
 
         return $this->createResponse();
     }

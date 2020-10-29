@@ -18,6 +18,7 @@ import ProductsManage from './ProductsManage';
 import ProductPromoCodesPanel from "./ProductPromoCodesPanel";
 import OrdersPanel from "./OrdersPanel";
 import ShowProfilePanel from './ShowProfilePanel';
+import SettingsPanel from './SettingsPanel';
 
 class DashboardPage extends React.Component {
 
@@ -194,12 +195,22 @@ class DashboardPage extends React.Component {
                                 Информация
                             </PanelHeader>
 
-                            <Div>
+                            <Div style={{ clear: 'both', overflow: 'hidden' }}>
                                 <Button
                                     mode="secondary"
                                     before={<Icon28UserOutline width={20} height={20} />}
-                                    onClick={() => { this.props.open('view1', 'admins') }}>
+                                    onClick={() => { this.props.open('view1', 'admins') }}
+                                    style={{ display: 'block', float: 'left', marginRight: 15 }}
+                                >
                                     Пользователи
+                                </Button>
+
+                                <Button
+                                    mode="secondary"
+                                    onClick={() => { this.props.open('view1', 'settings') }}
+                                    style={{ display: 'block', float: 'left' }}
+                                >
+                                    Настройки
                                 </Button>
                             </Div>
 
@@ -230,6 +241,10 @@ class DashboardPage extends React.Component {
 
                         <Panel id="show_profile">
                             <ShowProfilePanel user={this.state.selectedUser} />
+                        </Panel>
+
+                        <Panel id="settings">
+                            <SettingsPanel />
                         </Panel>
                     </View>
 
