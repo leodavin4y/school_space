@@ -326,4 +326,5 @@ class PointsRepository extends ServiceEntityRepository
 
         return $stmt->fetchAll(\PDO::FETCH_OBJ);
     }*/
+
 }

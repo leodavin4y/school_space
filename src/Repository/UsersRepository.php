@@ -57,4 +57,13 @@ class UsersRepository extends ServiceEntityRepository
             ->setMaxResults($pageSize)
             ->getResult();
     }
+
+    public function wipeBalances()
+    {
+        return $this->createQueryBuilder('u')
+            ->update()
+            ->set('u.balance', 0)
+            ->getQuery()
+            ->execute();
+    }
 }
