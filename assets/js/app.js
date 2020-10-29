@@ -13,7 +13,7 @@ import ReactDOM from "react-dom";
 import {Route, Switch, Redirect, BrowserRouter as Router, useHistory, useLocation} from 'react-router-dom';
 import bridge from '@vkontakte/vk-bridge';
 import ConfigProvider from '@vkontakte/vkui/dist/components/ConfigProvider/ConfigProvider';
-import {ScreenSpinner, Placeholder} from '@vkontakte/vkui';
+import {ScreenSpinner, Placeholder, Div} from '@vkontakte/vkui';
 import '@vkontakte/vkui/dist/vkui.css';
 import '@happysanta/vk-app-ui/dist/vkappui.css';
 import MainPage from '../js/main/MainPage';
@@ -44,7 +44,7 @@ const parseAuthData = () => {
     });
 
     result['sign'] = parser.has('sign') ? parser.get('sign') : '';
-    result.vk_params_count = length;
+    result.params_count = length;
 
     return result;
 };
@@ -124,7 +124,7 @@ class App extends React.Component {
 
         this.platform = 'vk_platform' in auth ? auth.vk_platform : null;
         this.mobile = this.platform && this.platform.indexOf('mobile') !== -1;
-        this.vk_params_count = auth.vk_params_count;
+        this.vk_params_count = auth.params_count;
         this.auth = JSON.stringify(auth);
         props.mainStore.setIsMobile(this.mobile);
         props.mainStore.setAuth(this.auth);
@@ -345,65 +345,67 @@ class App extends React.Component {
             <Router>
                 <Suspense fallback={<ScreenSpinner />}>
                     <ConfigProvider isWebView={bridge.isWebView()} scheme={this.state.scheme}>
-                        <Switch>
-                            <Route exact path={`${prefix}/`}>
-                                <MainPage
-                                    activeView={this.state.activeView}
-                                    activePanel={this.state.activePanel}
-                                    mobile={this.mobile}
-                                    open={this.goToPage}
-                                    this={this}
-                                />
-                            </Route>
+                        <>
+                            <Switch>
+                                <Route exact path={`${prefix}/`}>
+                                    <MainPage
+                                        activeView={this.state.activeView}
+                                        activePanel={this.state.activePanel}
+                                        mobile={this.mobile}
+                                        open={this.goToPage}
+                                        this={this}
+                                    />
+                                </Route>
 
-                            <Route exact path={`${prefix}/get-coins`}>
-                                <GetCoinsPage
-                                    activeView={this.state.activeView}
-                                    activePanel={this.state.activePanel}
-                                    mobile={this.mobile}
-                                    open={this.goToPage}
-                                    this={this}
-                                />
-                            </Route>
+                                <Route exact path={`${prefix}/get-coins`}>
+                                    <GetCoinsPage
+                                        activeView={this.state.activeView}
+                                        activePanel={this.state.activePanel}
+                                        mobile={this.mobile}
+                                        open={this.goToPage}
+                                        this={this}
+                                    />
+                                </Route>
 
-                            <Route exact path={`${prefix}/stats`}>
-                                <StatsPage
-                                    activeView={this.state.activeView}
-                                    activePanel={this.state.activePanel}
-                                    mobile={this.mobile}
-                                    open={this.goToPage}
-                                    this={this}
-                                />
-                            </Route>
+                                <Route exact path={`${prefix}/stats`}>
+                                    <StatsPage
+                                        activeView={this.state.activeView}
+                                        activePanel={this.state.activePanel}
+                                        mobile={this.mobile}
+                                        open={this.goToPage}
+                                        this={this}
+                                    />
+                                </Route>
 
-                            <Route exact path={`${prefix}/admin/login`}>
-                                <AdminLoginPage
-                                    authenticate={auth.authenticate}
-                                    signout={auth.signout}
-                                    this={this}
-                                />
-                            </Route>
+                                <Route exact path={`${prefix}/admin/login`}>
+                                    <AdminLoginPage
+                                        authenticate={auth.authenticate}
+                                        signout={auth.signout}
+                                        this={this}
+                                    />
+                                </Route>
 
-                            <PrivateRoute exact path={`${prefix}/admin/`}>
-                                <DashboardPage
-                                    activePanel={this.state.activePanel}
-                                    activeView={this.state.activeView}
-                                    this={this}
-                                    open={this.goToPage}
-                                    logout={auth.signout}
-                                />
-                            </PrivateRoute>
+                                <PrivateRoute exact path={`${prefix}/admin/`}>
+                                    <DashboardPage
+                                        activePanel={this.state.activePanel}
+                                        activeView={this.state.activeView}
+                                        this={this}
+                                        open={this.goToPage}
+                                        logout={auth.signout}
+                                    />
+                                </PrivateRoute>
 
-                            <Route>
-                                <NotFoundPage
-                                    activePanel={this.state.activePanel}
-                                    activeView={this.state.activeView}
-                                    open={this.goToPage}
-                                />
-                            </Route>
-                        </Switch>
+                                <Route>
+                                    <NotFoundPage
+                                        activePanel={this.state.activePanel}
+                                        activeView={this.state.activeView}
+                                        open={this.goToPage}
+                                    />
+                                </Route>
+                            </Switch>
 
-                        {this.state.redirect}
+                            {this.state.redirect}
+                        </>
                     </ConfigProvider>
                 </Suspense>
             </Router>

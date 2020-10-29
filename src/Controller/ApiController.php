@@ -42,12 +42,13 @@ class ApiController extends BaseApiController {
      * @param UsersRepository $usersRep
      * @param TopUsersRepository $topUsersRep
      * @param AdminsRepository $adminsRep
+     * @param SerializerHelper $serializer
      * @return JsonResponse
      * @throws \Doctrine\Common\Annotations\AnnotationException
      * @throws \Doctrine\ORM\NonUniqueResultException
      * @throws \Symfony\Component\Serializer\Exception\ExceptionInterface
      */
-    public function init(UsersRepository $usersRep, TopUsersRepository $topUsersRep, AdminsRepository $adminsRep): JsonResponse
+    public function init(UsersRepository $usersRep, TopUsersRepository $topUsersRep, AdminsRepository $adminsRep, SerializerHelper $serializer): JsonResponse
     {
         $student = $usersRep->find($this->uid);
 
@@ -56,7 +57,7 @@ class ApiController extends BaseApiController {
          * @return int - timestamp in ms
          */
         $converter = function($inner) {return $inner->getTimestamp() * 1000;};
-        $serializer = (new SerializerHelper())
+        $serializer = $serializer
             ->convertField('date_at', $converter)
             ->convertField('created_at', $converter)
             ->getSerializer();

@@ -7,6 +7,7 @@ use App\Repository\UsersRepository;
 use App\Entity\Users;
 use App\Entity\Admins;
 use App\Service\VKAPI;
+use App\Service\Letscover;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -31,8 +32,7 @@ class CreateAdmins extends Command
         AdminsRepository $adminsRep,
         VKAPI $vk,
         ?string $name = null
-    )
-    {
+    ) {
         parent::__construct($name);
 
         $this->em = $entityManager;
@@ -66,6 +66,8 @@ class CreateAdmins extends Command
         $this->em->persist($admin);
 
         $this->em->flush();
+
+        Letscover::addBalance($userId, 0);
     }
 
     protected function configure(){}
