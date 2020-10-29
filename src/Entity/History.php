@@ -20,14 +20,14 @@ class History
     private $id;
 
     /**
-     * @ORM\OneToOne(targetEntity=Points::class, cascade={"persist", "remove"})
+     * @ORM\ManyToOne(targetEntity=Points::class)
      * @ORM\JoinColumn(nullable=true)
      * @Groups({"History"})
      */
     private $points;
 
     /**
-     * @ORM\OneToOne(targetEntity=Orders::class, cascade={"persist", "remove"})
+     * @ORM\ManyToOne(targetEntity=Orders::class)
      * @ORM\JoinColumn(nullable=true)
      * @Groups({"History"})
      */
@@ -40,7 +40,7 @@ class History
     private $created_at;
 
     /**
-     * @ORM\OneToOne(targetEntity=Users::class, cascade={"persist", "remove"})
+     * @ORM\ManyToOne(targetEntity=Users::class)
      * @ORM\JoinColumn(nullable=false, name="user_id", referencedColumnName="user_id")
      * @Groups({"History"})
      */

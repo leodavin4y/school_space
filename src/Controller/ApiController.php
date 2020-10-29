@@ -222,7 +222,9 @@ class ApiController extends BaseApiController {
                 $em->persist($pointPhoto);
             }
 
-            $history = (new History())->setPoints($point);
+            $history = (new History())
+                ->setPoints($point)
+                ->setUser($student);
 
             $em->persist($history);
             $em->persist($point);
