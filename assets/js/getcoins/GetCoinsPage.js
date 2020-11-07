@@ -480,8 +480,15 @@ class GetCoinsPage extends React.Component {
             this.setState({
                 popupCanceled:
                     <PopupCanceled
-                        onClose={() => { this.setState({popupCanceled: null}) }}
-                        onButtonClick={() => { if (dayIntoCurMonth) {this.props.open('view1', 'upload')} }}
+                        onClose={() => {
+                            this.setState({ popupCanceled: null })
+                        }}
+                        onButtonClick={() => {
+                            if (!dayIntoCurMonth) return false;
+
+                            this.setState({ popupCanceled: null });
+                            this.props.open('view1', 'upload');
+                        }}
                         mobile={this.props.mobile}
                         {...item}
                     />
