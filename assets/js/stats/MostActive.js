@@ -69,7 +69,7 @@ class MostActive extends React.Component {
                             <tr key={'I' + userProfile.id}>
                                 <td key="1" align="left">
                                     <Avatar size={35} src={userProfile.photo_100}/>
-                                    <VKLink href={'https://vk.com/id' + userProfile.user_id} target="_blank">
+                                    <VKLink href={'https://vk.com/id' + userProfile.id} target="_blank">
                                         {userProfile.first_name} {userProfile.last_name}
                                     </VKLink>
                                 </td>
@@ -82,7 +82,7 @@ class MostActive extends React.Component {
                             <tr key={'I' + user.info.user_id}>
                                 <td key="1" align="left">
                                     <Avatar size={35} src={user.info.photo_100}/>
-                                    <VKLink href={'https://vk.com/id' + user.info.user_id} target="_blank">
+                                    <VKLink href={'https://vk.com/id' + userProfile.id} target="_blank">
                                         {user.info.first_name} {user.info.last_name}
                                     </VKLink>
                                 </td>

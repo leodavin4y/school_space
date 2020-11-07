@@ -82,11 +82,30 @@ class PointsRepository extends ServiceEntityRepository
         $emConfig->addCustomDatetimeFunction('DAY', 'DoctrineExtensions\Query\Mysql\Day');
         $emConfig->addCustomDatetimeFunction('NOW', 'DoctrineExtensions\Query\Mysql\Now');
 
-        return $this->createQueryBuilder('p')
+        /*return $this->createQueryBuilder('p')
             ->select()
             ->where('p.student_id = :user_id AND MONTH(p.date_at) = MONTH(NOW()) AND YEAR(p.date_at) = YEAR(NOW())')
             ->setParameter('user_id', $userId)
             ->orderBy('p.date_at', 'DESC')
+            ->getQuery()
+            ->getArrayResult();*/
+
+        $DQL = $this->createQueryBuilder('p')
+            ->select('MAX(p.id)')
+            ->where('p.student_id = :user_id AND MONTH(p.date_at) = MONTH(NOW()) AND YEAR(p.date_at) = YEAR(NOW())')
+            ->setParameter('user_id', $userId)
+            ->groupBy('p.date_at')
+            ->orderBy('p.date_at', 'DESC')
+            ->getQuery()
+            ->getDQL();
+
+        $whereInExpr = $em->getExpressionBuilder()
+            ->in('pnt.id', $DQL);
+
+        return $this->createQueryBuilder('pnt')
+            ->select()
+            ->where($whereInExpr)
+            ->setParameter('user_id', $userId)
             ->getQuery()
             ->getArrayResult();
     }

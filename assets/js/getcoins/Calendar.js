@@ -6,6 +6,7 @@ import css from "./Calendar.scss";
 import Icon16Spinner from '@vkontakte/icons/dist/16/spinner';
 import Icon24DoNotDisturb from '@vkontakte/icons/dist/24/do_not_disturb';
 import {getWeeksInMonth, monthNamesFullRU, weekNamesShortRU} from "./helpers";
+import {Spinner} from "@vkontakte/vkui";
 
 export default class Calendar extends Component {
 
@@ -164,6 +165,7 @@ export default class Calendar extends Component {
 				{isWaiting &&
 					<span className={'Processed__item Processed__item--waiting'}>
 						<Icon16Spinner width={12} height={12}/>
+						{/*<Spinner size="small" />*/}
 					</span>
 				}
 			</td>

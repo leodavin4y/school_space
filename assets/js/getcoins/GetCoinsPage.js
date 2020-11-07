@@ -8,6 +8,7 @@ import {
     withPlatform,
     Snackbar, Avatar, ScreenSpinner, Progress,
     InfoRow, Tooltip, Button as VKButton, Link as VKLink, Alert,
+    Spinner
 } from "@vkontakte/vkui";
 import {PageDialog} from '@happysanta/vk-app-ui';
 import Calendar from "./Calendar";
@@ -617,7 +618,8 @@ class GetCoinsPage extends React.Component {
                                 })}
                             >
                                 <div style={{ width: 44, margin: '0 auto 15px auto' }}>
-                                    <Icon44Spinner style={{ color: 'var(--accent)' }}/>
+                                    {/*<Icon44Spinner style={{ color: 'var(--accent)' }}/>*/}
+                                    <Spinner size="large" style={{ color: 'var(--accent)', marginTop: 20 }} />
                                 </div>
 
                                 <Title level="2" weight="semibold" style={{ marginBottom: 5, textTransform: 'uppercase' }}>

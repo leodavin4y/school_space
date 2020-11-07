@@ -184,10 +184,12 @@ class ApiController extends BaseApiController {
 
         if (!$student || !$student->getCity() || !$student->getSchool() || !$student->getClass() || !$student->getTeacher()) throw new HttpException(403, 'Access forbidden');
 
+        /*
         $dateAt = date('Y-m-d', $params['date_at']);
         $point = $pointRep->getOneByDateAt($this->uid, $dateAt);
 
         if ($point) throw new HttpException(409, 'Already exist');
+        */
 
         try {
             $prefix = $this->uid . '_' . date('d-m-y') . '_';
@@ -211,8 +213,6 @@ class ApiController extends BaseApiController {
             $point->setDateAt($dateAt)
                 ->setCreatedAt(new \DateTime())
                 ->setUser($student);
-
-
 
             foreach ($uploadedFiles as $file) {
                 $pointPhoto = (new PointsPhotos())

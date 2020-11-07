@@ -73,6 +73,7 @@ class ProfileModal extends React.Component {
 
                     school = schoolInfo.name ?? school;
                     classNum = 'year_from' in schoolInfo ? calcClass(schoolInfo.year_from) : 1;
+                    classNum = classNum >= 1 && classNum < 12 ? classNum : 1;
                 }
             } catch(e) {
                 bridge.send("VKWebAppGetUserInfo")
