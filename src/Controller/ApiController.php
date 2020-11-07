@@ -600,7 +600,9 @@ class ApiController extends BaseApiController {
                 $em->persist($promoCode);
             }
 
-            $history = (new History())->setOrders($order);
+            $history = (new History())
+                ->setOrders($order)
+                ->setUser($user);
 
             $em->persist($user);
             $em->persist($product);
