@@ -42,13 +42,20 @@ class ApiController extends BaseApiController {
      * @param UsersRepository $usersRep
      * @param TopUsersRepository $topUsersRep
      * @param AdminsRepository $adminsRep
+     * @param HistoryRepository $historyRep
      * @param SerializerHelper $serializer
      * @return JsonResponse
      * @throws \Doctrine\Common\Annotations\AnnotationException
      * @throws \Doctrine\ORM\NonUniqueResultException
      * @throws \Symfony\Component\Serializer\Exception\ExceptionInterface
      */
-    public function init(UsersRepository $usersRep, TopUsersRepository $topUsersRep, AdminsRepository $adminsRep, SerializerHelper $serializer): JsonResponse
+    public function init(
+        UsersRepository $usersRep,
+        TopUsersRepository $topUsersRep,
+        AdminsRepository $adminsRep,
+        HistoryRepository $historyRep,
+        SerializerHelper $serializer
+    ): JsonResponse
     {
         $student = $usersRep->find($this->uid);
 
@@ -75,7 +82,8 @@ class ApiController extends BaseApiController {
                 'info' => $student,
                 'rating' => $topUsersRep->getUser($this->uid)
             ],
-            'top_users' => $top
+            'top_users' => $top,
+            'store_actions_counter' => $historyRep->getOrdersCount($this->uid)
         ]);
     }
 

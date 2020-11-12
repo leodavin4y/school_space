@@ -2,7 +2,8 @@ import React from "react";
 import {Link, withRouter} from 'react-router-dom';
 import {
     Panel, Root, View, Link as VKLink, Tabs, TabsItem,
-    Button as VKButton, Card, Div, Title, Text, ScreenSpinner, PanelHeaderButton, PanelHeaderBack, PanelHeader
+    Button as VKButton, Card, Div, Title, Text, ScreenSpinner,
+    PanelHeaderButton, PanelHeaderBack, PanelHeader, Counter
 } from "@vkontakte/vkui";
 import axios from "axios";
 import ProfileModal from "../getcoins/ProfileModal";
@@ -32,7 +33,8 @@ class MainPage extends React.Component {
             storeSpinner: null,
             product: null,
             order: null,
-            history: []
+            history: [],
+            storeActionsCounter: 0
         };
     }
 
@@ -61,7 +63,8 @@ class MainPage extends React.Component {
 
             this.setState({
                 user: data.user,
-                topUsers: data.top_users
+                topUsers: data.top_users,
+                storeActionsCounter: data.store_actions_counter
             });
         }).catch(e => {
             const response = JSON.parse(e.request.response);
@@ -156,6 +159,11 @@ class MainPage extends React.Component {
                             <TabsItem
                                 onClick={() => {this.tab('store')}}
                                 selected={this.state.activeTab === 'store'}
+                                after={
+                                    <Counter size="s" style={{ background: 'var(--counter_prominent_background)' }}>
+                                        {this.state.storeActionsCounter}
+                                    </Counter>
+                                }
                             >
                                 Магазин
                             </TabsItem>

@@ -21,9 +21,12 @@ class HistoryRepository extends ServiceEntityRepository
 
     public function get(int $userId, int $page, int $pageSize = 10)
     {
-        $query = $this->createQueryBuilder('h')
+        $qb = $this->createQueryBuilder('h');
+
+        $query = $qb
             ->select()
             ->where('h.user = :user_id')
+            ->andWhere($qb->expr()->isNotNull('h.orders'))
             ->orderBy('h.id', 'DESC')
             ->setParameter('user_id', $userId)
             ->getQuery();
@@ -35,5 +38,18 @@ class HistoryRepository extends ServiceEntityRepository
             ->setFirstResult($pageSize * ($page - 1)) // Offset
             ->setMaxResults($pageSize)                          // Limit
             ->getResult();
+    }
+
+    public function getOrdersCount(int $userId)
+    {
+        $qb = $this->createQueryBuilder('h');
+
+        return (int) $qb
+            ->select('COUNT(h.id)')
+            ->where('h.user = :uid')
+            ->andWhere($qb->expr()->isNotNull('h.orders'))
+            ->setParameter('uid', $userId)
+            ->getQuery()
+            ->getSingleScalarResult();
     }
 }
