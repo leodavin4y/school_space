@@ -2,16 +2,15 @@
 
 namespace App\Controller;
 
-use App\Repository\UsersRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Component\Validator\Constraints as Assert;
-use App\Service\VKAPI;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+use App\Service\VKAPI;
 use App\Entity\Users;
+use App\Repository\UsersRepository;
 
 class BaseApiController extends AbstractController {
 
@@ -80,7 +79,7 @@ class BaseApiController extends AbstractController {
      * @param bool $status
      * @return JsonResponse
      */
-    public function createResponse(array $data = [], $status = true)
+    public function createResponse(array $data = [], $status = true): JsonResponse
     {
         return new JsonResponse([
             'status' => $status,

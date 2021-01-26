@@ -1,0 +1,22 @@
+.ImgCard {
+    width: 300px;
+    height: 300px;
+    float: left;
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-color: var(--background_light);
+    border-radius: 10px;
+    margin-right: 10px;
+}
+.ImgCard.mobile {
+    width: 300px;
+    height: 300px;
+    float: none;
+    clear: both;
+    margin: 0 auto 15px auto;
+}
+ul {
+    display: inline-block;
+    margin: 5px 0;
+}

@@ -4,10 +4,10 @@ import classNames from "classnames";
 import {declOfNum} from "../utils";
 import {Button as VKButton, Card, Div, Link as VKLink, Text, Title} from "@vkontakte/vkui";
 import {Icon56DownloadSquareOutline, Icon24Info, Icon24Settings} from '@vkontakte/icons';
-import {PageDialog} from "@happysanta/vk-app-ui";
 import MostActive from '../stats/MostActive';
 import {inject, observer} from "mobx-react";
 import PropTypes from 'prop-types';
+import Popup from '../components/popup/popup';
 
 @inject("mainStore")
 @observer
@@ -45,7 +45,7 @@ class MainSection extends React.Component {
                                 <strong>{balance}</strong> 💎 {declOfNum(balance, ['Умникоин', 'Умникоина', 'Умникоинов'])}
                             </div>
 
-                            <Link to='/get-coins'>
+                            <Link to={`${prefix}/get-coins`}>
                                 <VKButton mode="overlay_primary" className="text-up" style={{ marginTop: 15 }}>
                                     Обменять оценки
                                 </VKButton>
@@ -59,36 +59,28 @@ class MainSection extends React.Component {
                     </Card>
                 </Div>
 
-                {topUsers && topUsers.length > 0 &&
-                    <Div>
-                        <Title level="3" weight="medium" style={{ marginBottom: 5, textTransform: 'uppercase' }}>
-                            Самые активные за месяц
-                        </Title>
+                <Div>
+                    <Title level="3" weight="medium" style={{ marginBottom: 5, textTransform: 'uppercase' }}>
+                        Самые активные за месяц
+                    </Title>
 
-                        <MostActive
-                            users={topUsers}
-                            moreBtn={<Link to="/stats" style={{ textDecoration: 'none' }}>
-                                <VKButton
-                                    size="xl"
-                                    mode="primary"
-                                    style={{ marginTop: 15, cursor: 'pointer' }}
-                                >
-                                    Подробная статистика
-                                </VKButton>
-                            </Link>}
-                        />
-                    </Div>
-                }
+                    <MostActive
+                        initInProgress={this.props.initInProgress}
+                        users={topUsers}
+                        moreBtn={<Link to={`${prefix}/stats`} style={{ textDecoration: 'none' }}>
+                            <VKButton
+                                size="xl"
+                                mode="primary"
+                                style={{ marginTop: 15, cursor: 'pointer' }}
+                            >
+                                Подробная статистика
+                            </VKButton>
+                        </Link>}
+                    />
+                </Div>
 
                 {popupForSync &&
-                    <PageDialog
-                        onClose={() => this.setState({popupForSync:false})}
-                        className={classNames({
-                            "PageDialog": true,
-                            "PageDialog__window--fixed-width": true,
-                            "PageDialog__window--mobile": store.isMobile
-                        })}
-                    >
+                    <Popup onClose={() => this.setState({popupForSync:false})}>
                         <div style={{ width: 56, margin: '0 auto' }}>
                             <Icon56DownloadSquareOutline style={{ color: 'var(--accent)' }}/>
                         </div>
@@ -103,37 +95,32 @@ class MainSection extends React.Component {
                         </Text>
 
                         <Div>
-                            <Link to='/get-coins'>
+                            <Link to={`${prefix}/get-coins`}>
                                 <VKButton size="l" mode="primary">Обменять оценки</VKButton>
                             </Link>
                         </Div>
-                    </PageDialog>
+                    </Popup>
                 }
 
                 {popupForCoins &&
-                    <PageDialog
-                        onClose={() => this.setState({popupForCoins:false})}
-                        className={classNames({
-                            "PageDialog": true,
-                            "PageDialog__window--fixed-width": true,
-                            "PageDialog__window--mobile": store.isMobile
-                        })}
-                    >
-                        <Title level="2" weight="semibold" style={{ marginBottom: 16, textTransform: 'uppercase' }}>
-                            Умникоины
-                        </Title>
+                    <>
+                        <Popup onClose={() => this.setState({popupForCoins:false})}>
+                            <Title level="2" weight="semibold" style={{ margin: '16px 0', textTransform: 'uppercase' }}>
+                                Умникоины
+                            </Title>
 
-                        <Text weight="regular" style={{ marginBottom: 16 }}>
-                            Это баллы мотивации за школьные, творческие и спортивные успехи.
-                            Накопленные умникоины можно обменять на товары в благотворительном магазине.
-                        </Text>
+                            <Text weight="regular" style={{ marginBottom: 16 }}>
+                                Это баллы мотивации за школьные, творческие и спортивные успехи.
+                                Накопленные умникоины можно обменять на товары в благотворительном магазине.
+                            </Text>
 
-                        <Div>
-                            <Link to='/get-coins'>
-                                <VKButton size="l" mode="primary">Обменять оценки</VKButton>
-                            </Link>
-                        </Div>
-                    </PageDialog>
+                            <Div>
+                                <Link to={`${prefix}/get-coins`}>
+                                    <VKButton size="l" mode="primary">Обменять оценки</VKButton>
+                                </Link>
+                            </Div>
+                        </Popup>
+                    </>
                 }
 
                 {this.state.spinner}
@@ -143,6 +130,7 @@ class MainSection extends React.Component {
 }
 
 MainSection.propTypes = {
+    initInProgress: PropTypes.bool,
     topUsers: PropTypes.array
 };
 

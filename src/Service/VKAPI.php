@@ -84,15 +84,17 @@ class VKAPI {
     /**
      * @param int $userId
      * @param string $msg
+     * @param array $attachments
      * @return int
      * @throws \Exception
      */
-    public static function sendMsg(int $userId, string $msg): int
+    public static function sendMsg(int $userId, string $msg, $attachments = []): int
     {
         $send = self::method('messages.send', [
             'user_id' => $userId,
             'random_id' => $_ENV['APP_ID'] + time(),
             'message' => $msg,
+            'attachment' => implode(',', $attachments),
             'access_token' => $_ENV['GROUP_TOKEN'],
             'v' => 5.124
         ]);
@@ -100,5 +102,72 @@ class VKAPI {
         if (isset($send->error)) throw new \Exception($send->error->error_msg, $send->error->error_code);
 
         return $send->response;
+    }
+
+    public static function getMessageUploadServer($userId): string
+    {
+        $server = self::method('photos.getMessagesUploadServer', [
+            'peer_id' => $userId,
+            'access_token' => $_ENV['GROUP_TOKEN'],
+            'v' => 5.124
+        ]);
+
+        if (isset($server->error)) throw new \Exception($server->error->error_msg, $server->error->error_code);
+
+        return $server->response->upload_url;
+    }
+
+    public static function sendFile(string $url, string $filePath): \stdClass
+    {
+        // создание всех заголовков и отправка POST запроса с файлом
+        $boundary = '---------------------' . substr(md5(rand(0, 32000)), 0, 10);
+
+        $postData = '';
+        $postData .= '--' . $boundary . "\n";
+        $postData .= 'Content-Disposition: form-data; name="photo"; filename="' . uniqid() . '.jpg"' . "\n";
+        $postData .= 'Content-Type: image/jpeg' . "\n";
+        $postData .= 'Content-Transfer-Encoding: binary' . "\n\n";
+        $postData .= file_get_contents($filePath) . "\n";
+        $postData .= '--' . $boundary . "\n";
+
+        $context = stream_context_create([
+            'http' => [
+                'method' => 'POST',
+                'content' => $postData,
+                'header' => [
+                    'Content-Type: multipart/form-data; boundary=' . $boundary
+                ]
+            ]
+        ]);
+
+        $upload = json_decode(file_get_contents($url,false, $context));
+
+        if (isset($upl->error)) throw new \Exception($upload->error->error_msg, $upload->error->error_code);
+
+        return $upload;
+    }
+
+    public static function saveMessagesPhoto($photo, $server, $hash): \stdClass
+    {
+        $save = self::method('photos.saveMessagesPhoto', [
+            'photo' => $photo,
+            'server' => $server,
+            'hash' => $hash,
+            'access_token' => $_ENV['GROUP_TOKEN'],
+            'v' => 5.124
+        ]);
+
+        if (isset($save->error)) throw new \Exception($save->error->error_msg, $save->error->error_code);
+
+        return $save->response[0];
+    }
+
+    public static function attachPhotoToDialog($peerId, $filePath): string
+    {
+        $serverURL = self::getMessageUploadServer($peerId);
+        $upload = self::sendFile($serverURL, $filePath);
+        $save = self::saveMessagesPhoto($upload->photo, $upload->server, $upload->hash);
+
+        return "photo{$save->owner_id}_{$save->id}";
     }
 }

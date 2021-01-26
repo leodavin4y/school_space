@@ -4,6 +4,23 @@
     <script>
         const APP_ID = {{ env.get('APP_ID') }};
         const GROUP_ID = {{ env.get('GROUP_ID') }};
+        const prefix = '/app';
+
+        {% if app.debug %}
+            window.addEventListener('error', function (e) {
+                console.log('Err!!!');
+
+                const stack = e.error.stack;
+                const msg = stack ? e.error.toString() + "\n" + stack : e.error.toString();
+
+                const f = new FormData();
+                f.append('log', msg);
+
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', prefix + '/api/log', true);
+                xhr.send(f);
+            });
+        {% endif %}
     </script>
 
     {# 'app' must match the first argument to addEntry() in webpack.config.js #}

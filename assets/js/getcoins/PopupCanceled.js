@@ -1,9 +1,9 @@
 import React from "react";
 import {Icon56ErrorOutline} from "@vkontakte/icons";
 import {Button, Div, Text, Title} from "@vkontakte/vkui";
-import {PageDialog} from "@happysanta/vk-app-ui";
 import {monthRus} from "../utils";
 import classNames from "classnames";
+import Popup from "../components/popup/popup";
 
 class PopupCanceled extends React.Component {
 
@@ -15,14 +15,7 @@ class PopupCanceled extends React.Component {
         const {date_at, cancel_comment} = this.props;
 
         return (
-            <PageDialog
-                onClose={this.props.onClose}
-                className={classNames({
-                    "PageDialog": true,
-                    "PageDialog__window--fixed-width": true,
-                    "PageDialog__window--mobile": this.props.mobile
-                })}
-            >
+            <Popup onClose={this.props.onClose}>
                 <div style={{ width: 44, margin: '0 auto 15px auto' }}>
                     <Icon56ErrorOutline width={44} height={44} style={{ color: 'var(--accent)' }}/>
                 </div>
@@ -51,7 +44,7 @@ class PopupCanceled extends React.Component {
                         Исправить
                     </Button>
                 </Div>
-            </PageDialog>
+            </Popup>
         );
     }
 }

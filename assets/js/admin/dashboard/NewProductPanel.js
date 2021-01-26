@@ -14,6 +14,7 @@ import {inject, observer} from "mobx-react";
 import axios from 'axios';
 import PropTypes from 'prop-types';
 import {declOfNum} from "../../utils";
+import { Editor } from '@tinymce/tinymce-react';
 
 @inject("mainStore")
 @observer
@@ -56,7 +57,7 @@ class NewProductPanel extends React.Component {
     };
 
     description = (e) => {
-        this.setState({ descr: e.target.value })
+        this.setState({ descr: e.target.getContent() })
     };
 
     price = (e) => {
@@ -147,7 +148,7 @@ class NewProductPanel extends React.Component {
 
         axios({
             method: 'post',
-            url: '/admin/product/' + (this.props.product ? 'update' : 'store'),
+            url: `${prefix}/admin/product/` + (this.props.product ? 'update' : 'store'),
             data: form
         }).then(response => {
             const result = response.data;
@@ -195,7 +196,7 @@ class NewProductPanel extends React.Component {
         let photoBlob, photoURL;
 
         if (product.photo) {
-            photoURL = '/upload/products/' + product.photo;
+            photoURL = prefix + '/upload/products/' + product.photo;
             photoBlob =
                 await this.loadXHR(photoURL)
                     .then(blob => {
@@ -254,12 +255,34 @@ class NewProductPanel extends React.Component {
                         key='name'
                     />
 
-                    <Textarea
+                    {/*<Textarea
                         top="Описание"
                         placeholder="Описание товара (до 65 тыс. симв.)"
                         onChange={this.description}
                         value={this.state.descr}
-                    />
+                    />*/}
+                    <FormLayoutGroup top="Описание">
+                        <Div style={{ paddingTop: 0, paddingBottom: 0 }}>
+                            <Editor
+                                apiKey="4agmyus6h1io2b7a9hn40q6pl4bgbnjnnwnr46lvyzzrtg6j"
+                                initialValue={this.state.descr}
+                                init={{
+                                    height: 250,
+                                    menubar: false,
+                                    plugins: [
+                                        'advlist autolink lists link image charmap print preview anchor',
+                                        'searchreplace visualblocks code fullscreen',
+                                        'insertdatetime media table paste code help wordcount'
+                                    ],
+                                    toolbar:
+                                        'undo redo | link bold italic backcolor | \
+                                        bullist numlist outdent indent'
+                                }}
+                                onChange={this.description}
+                            />
+                        </Div>
+                    </FormLayoutGroup>
+
 
                     <Input
                         type="number"

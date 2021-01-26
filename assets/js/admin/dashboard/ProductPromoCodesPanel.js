@@ -43,7 +43,7 @@ class ProductPromoCodesPanel extends React.Component {
 
         if (!product) return false;
 
-        axios.post(`/admin/products/${product.id}/promo-codes/get`, {
+        axios.post(`${prefix}/admin/products/${product.id}/promo-codes/get`, {
             auth: this.props.mainStore.auth
         }).then(r => {
             const result = r.data;
@@ -59,7 +59,7 @@ class ProductPromoCodesPanel extends React.Component {
     };
 
     remove = (promo, {product} = this.props) => {
-        axios.post(`/admin/products/${product.id}/promo-codes/${promo.id}/delete`, {
+        axios.post(`${prefix}/admin/products/${product.id}/promo-codes/${promo.id}/delete`, {
             auth: this.props.mainStore.auth
         }).then(r => {
             if (!r.data.status) throw new Error('Failed to delete');
@@ -82,7 +82,7 @@ class ProductPromoCodesPanel extends React.Component {
     };
 
     store = (e, {product} = this.props) => {
-        axios.post(`/admin/products/${product.id}/promo-codes/store`, {
+        axios.post(`${prefix}/admin/products/${product.id}/promo-codes/store`, {
             code: this.state.code,
             auth: this.props.mainStore.auth
         }).then(r => {

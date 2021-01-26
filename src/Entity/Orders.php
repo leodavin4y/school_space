@@ -61,6 +61,7 @@ class Orders
 
     /**
      * @ORM\Column(type="boolean", options={"default" : 0})
+     * @Groups({"Orders"})
      */
     private $completed = 0;
 

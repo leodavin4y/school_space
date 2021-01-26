@@ -5,7 +5,6 @@ import {
     InfoRow,
     Progress,
     Title,
-    Subhead,
     View,
     Panel,
     PanelHeader,
@@ -17,10 +16,8 @@ import {PromoCard} from "@happysanta/vk-app-ui";
 import {inject, observer} from "mobx-react";
 import axios from 'axios';
 import MostActive from './MostActive';
-import bridge from '@vkontakte/vk-bridge';
-import {Api, getAccessToken} from "../utils";
+import {Api, declOfNum, getAccessToken} from "../utils";
 import Link from "@vkontakte/vkui/dist/components/Link/Link";
-import {Icon24User} from '@vkontakte/icons';
 import ScrollContainer from 'react-indiana-drag-scroll'
 
 @inject("mainStore")
@@ -61,7 +58,7 @@ class StatsPage extends React.Component {
     fetchStats = () => {
         axios({
             method: 'post',
-            url: '/api/reports/total-stats',
+            url: `${prefix}/api/reports/total-stats`,
             data: {
                 auth: this.props.this.auth
             }
@@ -86,7 +83,7 @@ class StatsPage extends React.Component {
 
         axios({
             method: 'post',
-            url: '/api/friends/get',
+            url: `${prefix}/api/friends/get`,
             data: {
                 friends: friends.response,
                 auth: this.props.this.auth
@@ -104,15 +101,19 @@ class StatsPage extends React.Component {
     }
 
     render() {
-        const {user, userProfile} = this.props.mainStore;
+        const {isMobile} = this.props.mainStore;
+        const {points_total, users_total, friends} = this.state;
+        const back = () => {window.history.back()};
+        const coinsStr = declOfNum(points_total, ['умникоин', 'умникоина', 'умникоинов']);
+        const usersStr = declOfNum(users_total, ['пользователь', 'пользователя', 'пользователей']);
 
         return (
             <Root activeView={this.props.activeView}>
                 <View id="view1" activePanel={this.props.activePanel}>
                     <Panel id="main">
                         <PanelHeader
-                            addon={<PanelHeaderButton onClick={() => { window.history.back() }}>Назад</PanelHeaderButton>}
-                            left={<PanelHeaderBack onClick={() => { window.history.back() }} />}
+                            addon={<PanelHeaderButton onClick={back}>Назад</PanelHeaderButton>}
+                            left={<PanelHeaderBack onClick={back} />}
                         >
                             Статистика
                         </PanelHeader>
@@ -124,11 +125,11 @@ class StatsPage extends React.Component {
                         </Div>
 
                         <Div>
-                            <InfoRow header={this.state.points_total + " умникоинов конвертировали " + this.state.users_total + " пользователей"}>
-                                <Progress value={parseInt((this.state.points_total / 10000) * 100)} />
+                            <InfoRow header={`${points_total} ${coinsStr} конвертировал(и) ${users_total} ${usersStr}`}>
+                                <Progress value={parseInt((points_total / 10000) * 100)} />
                             </InfoRow>
                             <div className="Subhead" style={{ padding: '5px 0', color: 'var(--text_secondary)' }}>
-                                {parseInt((this.state.points_total / 10000) * 100)}%
+                                {parseInt((points_total / 10000) * 100)}%
                             </div>
                         </Div>
 
@@ -136,9 +137,9 @@ class StatsPage extends React.Component {
                             style={{ paddingBottom: 8 }}
                             header={<Header mode="secondary" style={{ textTransform: 'uppercase' }}>Ваши друзья собирают умникоины</Header>}
                         >
-                            {this.state.friends.length === 0 &&
+                            {friends.length === 0 &&
                                 <Div>
-                                    <PromoCard>
+                                    <PromoCard className="PromoCard">
                                         <div style={{ textTransform: 'uppercase', color: 'var(--text_secondary)', textAlign: 'center' }}>
                                             Ваши друзья ещё не обменивали<br/> оценки в этом месяце
                                         </div>
@@ -146,10 +147,10 @@ class StatsPage extends React.Component {
                                 </Div>
                             }
 
-                            {this.state.friends.length > 0 && this.props.mainStore.isMobile &&
+                            {friends.length > 0 && isMobile &&
                                 <HorizontalScroll>
                                     <div className="Friends" style={{ display: 'flex' }}>
-                                        {this.state.friends.map((friend) =>
+                                        {friends.map((friend) =>
                                             <Link href={'https://vk.com/id' + friend.user_id} key={friend.user_id} target="_blank">
                                                 <div className="Friends__item">
                                                     <Avatar size={64} src={friend.photo_100} style={{ marginBottom: 8 }}/>
@@ -162,9 +163,9 @@ class StatsPage extends React.Component {
                                 </HorizontalScroll>
                             }
 
-                            {this.state.friends.length > 0 && !this.props.mainStore.isMobile &&
+                            {friends.length > 0 && !isMobile &&
                                 <ScrollContainer className="Friends" style={{ display: 'flex' }}>
-                                    {this.state.friends.map((friend) =>
+                                    {friends.map((friend) =>
                                         <Link href={'https://vk.com/id' + friend.user_id} key={friend.user_id} target="_blank">
                                             <div className="Friends__item">
                                                 <Avatar size={64} src={friend.photo_100} style={{ marginBottom: 8 }}/>

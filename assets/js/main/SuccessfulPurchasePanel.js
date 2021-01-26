@@ -30,7 +30,7 @@ class SuccessfulPurchasePanel extends React.Component {
     }
 
     sendMessage = ({order, mainStore} = this.props) => {
-        return axios.post(`/api/orders/${order.id}/message/send`, {
+        return axios.post(`${prefix}/api/orders/${order.id}/message/send`, {
             auth: mainStore.auth
         })
     };

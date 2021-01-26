@@ -11,7 +11,7 @@ import {
     PanelHeaderButton,
     Select,
     Headline,
-    withPlatform
+    withPlatform, Title, Text, Button
 } from "@vkontakte/vkui";
 import {Icon24Cancel, Icon24Dismiss} from "@vkontakte/icons";
 import axios from "axios";
@@ -35,6 +35,7 @@ class ProfileModal extends React.Component {
             teacher: '',
             validateForm: false,
             formIsValid: false,
+            rightsPopup: null
         };
 
         this.userFetched = false;
@@ -53,33 +54,40 @@ class ProfileModal extends React.Component {
             let school = this.state.school;
             let classNum = this.state.class;
 
-            try {
-                const token = await getAccessToken();
-                const profile = await getCurrentUser(token);
-                const calcClass = (yearFrom) => {
-                    const date1 = new Date("01/09/" + yearFrom);
-                    const date2 = new Date();
-                    const DiffInDays = (date2.getTime() - date1.getTime()) / (1000 * 3600 * 24);
+            if (this.props.rightsAllowed) {
+                try {
+                    const token = await getAccessToken();
+                    const profile = await getCurrentUser(token);
+                    const calcClass = (yearFrom) => {
+                        const date1 = new Date("01/09/" + yearFrom);
+                        const date2 = new Date();
+                        const DiffInDays = (date2.getTime() - date1.getTime()) / (1000 * 3600 * 24);
 
-                    console.log('Diff:', DiffInDays);
+                        console.log('Diff:', DiffInDays);
 
-                    return Math.ceil(DiffInDays / 365);
-                };
+                        return Math.ceil(DiffInDays / 365);
+                    };
 
-                city = profile.city.title ?? city;
+                    city = profile.city.title ?? city;
 
-                if ('schools' in profile && 'name' in profile.schools[profile.schools.length - 1]) {
-                    const schoolInfo = profile.schools[profile.schools.length - 1];
+                    if (profile && 'schools' in profile && profile.schools && profile.schools.length > 0 && 'name' in profile.schools[profile.schools.length - 1]) {
+                        const schoolInfo = profile.schools[profile.schools.length - 1];
 
-                    school = schoolInfo.name ?? school;
-                    classNum = 'year_from' in schoolInfo ? calcClass(schoolInfo.year_from) : 1;
-                    classNum = classNum >= 1 && classNum < 12 ? classNum : 1;
+                        school = schoolInfo.name ?? school;
+                        classNum = 'year_from' in schoolInfo ? calcClass(schoolInfo.year_from) : 1;
+                        classNum = classNum >= 1 && classNum < 12 ? classNum : 1;
+                    }
+                } catch(e) {
+                    console.log(e);
+
+                    bridge.send("VKWebAppGetUserInfo")
+                        .then(data => {
+                            city = data.city.title ?? city;
+                        });
                 }
-            } catch(e) {
-                bridge.send("VKWebAppGetUserInfo")
-                    .then(data => {
-                        city = data.city.title ?? city;
-                    });
+
+                console.log('Cookie set');
+                if (window.localStorage) window.localStorage.setItem('Profile_granted', '1');
             }
 
             this.setState({
@@ -103,7 +111,7 @@ class ProfileModal extends React.Component {
     reFetchUser = () => {
         const {mainStore} = this.props;
 
-        axios.post('/api/init', {
+        axios.post(`${prefix}/api/init`, {
             auth: this.props.auth
         }).then(r => {
             const result = r.data;
@@ -126,12 +134,13 @@ class ProfileModal extends React.Component {
 
         console.log(this.state);
 
-        const regExp = new RegExp('(Школа|шк){0,1}[(номер)*№#\\. ]*', 'ig');
-        const school = this.state.school.trim().replace(regExp, '');
+        // const regExp = new RegExp('(Школа|шк){0,1}[(номер)*№#\\. ]*', 'ig');
+        // const school = this.state.school.trim().replace(regExp, '');
+        const school = this.state.school.replace(new RegExp('^(Школа|Шк|Шк\.)+', 'ig'), '').trim();
 
         axios({
             method: 'post',
-            url: '/api/profile/store',
+            url: `${prefix}/api/profile/store`,
             data: {
                 city: this.state.city.trim(),
                 school: school,
@@ -182,7 +191,7 @@ class ProfileModal extends React.Component {
 
     schoolValid = () => {
         const school = this.state.school.trim();
-        return school.length > 0;
+        return school.length > 0 && school.length <= 30;
     };
 
     inputClass = (e) => {
@@ -200,7 +209,7 @@ class ProfileModal extends React.Component {
     fetchProfile = () => {
         return axios({
             method: 'post',
-            url: '/api/profile/get',
+            url: `${prefix}/api/profile/get`,
             data: {
                 auth: this.props.auth
             }
@@ -254,6 +263,7 @@ class ProfileModal extends React.Component {
                                 onInput={this.inputSchool}
                                 onChange={this.inputSchool}
                                 status={school === '' && !this.state.validateForm ? 'default' : this.schoolValid() ? 'valid' : 'error'}
+                                maxLength={30}
                             />
 
                             <Input
@@ -278,6 +288,7 @@ class ProfileModal extends React.Component {
                                 )}
                             </Select>
                         </FormLayout>
+
                     </div>
                 </ModalPage>
             </ModalRoot>

@@ -83,7 +83,6 @@ class Letscover {
 
         if ($userId) {
             $data = ['userId' => $userId];
-
             return json_decode(self::request('get', 'users', $data))[0] ?? null;
         }
 

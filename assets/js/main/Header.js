@@ -1,15 +1,27 @@
 import React from "react";
 import {Link} from "react-router-dom";
-import {Avatar, Group, RichCell} from "@vkontakte/vkui";
+import {Avatar, Group, RichCell, Tooltip} from "@vkontakte/vkui";
 import {Icon28EditOutline} from '@vkontakte/icons';
 import {inject, observer} from "mobx-react";
+import talentLogo from '../../images/t.png';
 
 @inject("mainStore")
 @observer
 class Header extends React.Component {
+
     constructor(props) {
-        super(props)
+        super(props);
+        this.state = {
+            tooltipSeen: false
+        };
     }
+
+    talentTooltipShow = () => this.setState({ tooltipSeen: true });
+    talentTooltipHide = () => this.setState({ tooltipSeen: false });
+    talentTooltipFlash = () => {
+        this.talentTooltipShow();
+        setTimeout(this.talentTooltipHide, 4000);
+    };
 
     render() {
         const {user, userProfile} = this.props.mainStore;
@@ -29,6 +41,20 @@ class Header extends React.Component {
                 </span>
         );
 
+        const talents = (
+            <Tooltip
+                mode="light"
+                text="Таланты – это переплавленные умникоины, которые вы не использовали до конца месяца"
+                isShown={this.state.tooltipSeen}
+                onClose={this.talentTooltipHide}
+            >
+                <span onClick={() => this.talentTooltipFlash()} style={{ fontSize: '10px', padding: '2px 3px', border: '1px solid #ccc', borderRadius: 4, color: 'var(--text_secondary)' }}>
+                    <img src={talentLogo} style={{ position: 'relative', top: 1, paddingRight: 3 }}/>
+                    {(user && user.info ? user.info.talent : 0).toFixed(2)}
+                </span>
+            </Tooltip>
+        );
+
         return (
             <Group>
                 {userProfile &&
@@ -37,14 +63,15 @@ class Header extends React.Component {
                         before={<Avatar size={48} src={userProfile.photo_100 ? userProfile.photo_100 : 'https://vk.com/images/camera_50.png?ava=1'}/>}
                         caption={school}
                     >
-                        {userProfile.first_name} {userProfile.last_name}
+                        {userProfile.first_name} {userProfile.last_name} {talents}
                         {this.props.isAdmin &&
-                            <Link to={"/admin/login"} className="Link" style={{ padding: '0 5px', fontSize: '0.75rem' }}>
+                            <Link to={`${prefix}/admin/login`} className="Link" style={{ padding: '0 5px', fontSize: '0.75rem' }}>
                                 Admin
                             </Link>
                         }
                     </RichCell>
                 }
+
             </Group>
         );
     }

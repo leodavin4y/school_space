@@ -15,6 +15,10 @@ import {
 } from "@vkontakte/vkui";
 import axios from "axios";
 import {inject, observer} from "mobx-react";
+import {declOfNum} from "../../utils";
+import talentLogoSrc from '../../../images/t.png';
+
+const talentLogo = (<img src={talentLogoSrc}/>);
 
 @inject("mainStore")
 @observer
@@ -51,7 +55,7 @@ class Users extends React.Component {
     registerAdmin = async adminId => {
         return axios({
             method: 'post',
-            url: '/admin/register',
+            url: `${prefix}/admin/register`,
             data: {
                 user_id: adminId,
                 auth: this.props.mainStore.auth
@@ -68,9 +72,9 @@ class Users extends React.Component {
         const {search, page, activeTab} = this.state;
         const {mainStore, onPopout} = this.props;
 
-        onPopout(<ScreenSpinner/>);
+        // onPopout(<ScreenSpinner/>);
 
-        axios.post(`/admin/${activeTab}/search`, {
+        axios.post(`${prefix}/admin/${activeTab}/search`, {
             search: search,
             page: page,
             auth: mainStore.auth
@@ -82,6 +86,8 @@ class Users extends React.Component {
             this.setState({
                 users: activeTab === 'admins' ? data : [...this.state.users, ...data]
             });
+
+            // if (activeTab !== 'admins')
         }).catch(e => {
             this.snack('Не удалось получить список пользователей');
         }).finally(() => {
@@ -91,7 +97,7 @@ class Users extends React.Component {
     };
 
     fetchUsersCount = () => {
-        axios.post('/admin/users/count', {
+        axios.post(`${prefix}/admin/users/count`, {
             auth: this.props.mainStore.auth
         }).then(r => {
             const {status, data} = r.data;
@@ -141,20 +147,23 @@ class Users extends React.Component {
 
         this.setState({
             activeTab: name,
-            users: []
+            users: [],
+            page: 1
         }, this.searchUsers);
     };
 
     search = (e) => {
         this.setState({
-            search: e.target.value
+            search: e.target.value,
+            users: [],
+            page: 1
         }, this.searchUsers);
     };
 
     ban = (user, {mainStore} = this.props) => {
         const action = user.ban ? 'unban' : 'ban';
 
-        axios.post(`/admin/users/${user.user_id}/${action}`, {
+        axios.post(`${prefix}/admin/users/${user.user_id}/${action}`, {
             auth: mainStore.auth
         }).then(r => {
             const {status} = r.data;
@@ -177,7 +186,7 @@ class Users extends React.Component {
 
         if (isNaN(sum)) return false;
 
-        axios.post(`/admin/users/${user.user_id}/balance/set`, {
+        axios.post(`${prefix}/admin/users/${user.user_id}/balance/set`, {
             auth: mainStore.auth,
             balance: sum
         }).then(r => {
@@ -201,8 +210,37 @@ class Users extends React.Component {
         });
     };
 
+    setTalent = (user) => {
+        const amount = parseFloat(prompt('Введите кол-во талантов'));
+
+        axios({
+            method: 'post',
+            url: `${prefix}/admin/users/${user.user_id}/talent/set`,
+            data: {
+                talent: amount,
+                auth: this.props.mainStore.auth
+            }
+        }).then(r => {
+            if (!r.data.status) throw new Error('Failed to set talents');
+
+            this.setState({
+                users: this.state.users.map(u => {
+                    if (u.user_id === user.user_id) {
+                        u.talent = amount;
+                    }
+
+                    return u;
+                })
+            });
+
+            this.snack(`Баланс пользователя ${user.first_name} изменен`);
+        }).catch(e => {
+            this.snack(`Ошибка: не удалось изменить баланс пользователя ${user.first_name}`);
+        })
+    };
+
     removeAdminPrivilege = (user, {mainStore} = this.props) => {
-        axios.post(`/admin/admins/${user.user_id}/demote`, {
+        axios.post(`${prefix}/admin/admins/${user.user_id}/demote`, {
             auth: mainStore.auth
         }).then(r => {
             const {status} = r.data;
@@ -253,6 +291,12 @@ class Users extends React.Component {
                     onClick={() => this.setBalance(user)}
                 >
                     Изменить баланс
+                </ActionSheetItem>
+                <ActionSheetItem
+                    autoclose
+                    onClick={() => this.setTalent(user)}
+                >
+                    Изменить таланты
                 </ActionSheetItem>
                 {this.state.activeTab === 'admins' &&
                     <ActionSheetItem
@@ -347,7 +391,7 @@ class Users extends React.Component {
                                     }}
                                 >
                                     <div>
-                                        {user.first_name} {user.last_name} <div style={{ float: 'right' }}>🏆 {user.rank ?? '...'} 💎 {user.balance}</div>
+                                        {user.first_name} {user.last_name} <div style={{ float: 'right' }}>🏆 {user.rank ?? '...'} 💎 {user.balance}  {talentLogo} {user.talent ? Number(user.talent).toFixed(2) : '0.00'}</div>
                                     </div>
                                 </SimpleCell>
                             )}

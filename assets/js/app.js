@@ -70,7 +70,7 @@ function PrivateRoute({ children, ...rest }) {
                 auth.isAuthenticated ? (
                     children
                 ) : (
-                    <Redirect to={{pathname: "/admin/login", state: { from: location }}}/>
+                    <Redirect to={{pathname: `${prefix}/admin/login`, state: { from: location }}}/>
                 )
             }
         />
@@ -200,6 +200,8 @@ class App extends React.Component {
             isLight = !isLight;
         }
 
+        // isLight = false;
+
         this.setState({ scheme: isLight ? 'bright_light' : 'space_gray' });
 
         bridge.send('VKWebAppSetViewSettings', {
@@ -302,7 +304,7 @@ class App extends React.Component {
     componentDidMount() {
         console.log('App mounted');
 
-        if (this.vk_params_count <= 1) return this.redirect('/404');
+        // if (this.vk_params_count <= 1) return this.redirect('/404');
 
         const sub = () => {
             window.addEventListener('offline', this.showPlaceholder);
@@ -339,8 +341,6 @@ class App extends React.Component {
     }
 
     render() {
-        const prefix = '';
-
         return (
             <Router>
                 <Suspense fallback={<ScreenSpinner />}>

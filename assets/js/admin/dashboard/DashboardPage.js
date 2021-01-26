@@ -98,7 +98,7 @@ class DashboardPage extends React.Component {
 
         axios({
             method: 'post',
-            url: '/admin/login',
+            url: `${prefix}/admin/login`,
             data: params
         }).then(response => {
             const {data} = response.data;

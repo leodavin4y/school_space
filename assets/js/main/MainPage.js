@@ -1,9 +1,9 @@
 import React from "react";
-import {Link, withRouter} from 'react-router-dom';
+import {withRouter} from 'react-router-dom';
 import {
-    Panel, Root, View, Link as VKLink, Tabs, TabsItem,
-    Button as VKButton, Card, Div, Title, Text, ScreenSpinner,
-    PanelHeaderButton, PanelHeaderBack, PanelHeader, Counter
+    Panel, Root, View, Tabs, TabsItem,
+    Button as VKButton, Div, Title, Text, ScreenSpinner,
+    Counter,
 } from "@vkontakte/vkui";
 import axios from "axios";
 import ProfileModal from "../getcoins/ProfileModal";
@@ -14,8 +14,9 @@ import HistorySection from './HistorySection';
 import ShopSection from './ShopSection';
 import ProductPanel from './ProductPanel';
 import SuccessfulPurchasePanel from './SuccessfulPurchasePanel';
+import Popup from '../components/popup/popup';
 
-@inject("mainStore")
+@inject("mainStore", "shopStore")
 @observer
 class MainPage extends React.Component {
     constructor(props) {
@@ -34,7 +35,10 @@ class MainPage extends React.Component {
             product: null,
             order: null,
             history: [],
-            storeActionsCounter: 0
+            storeActionsCounter: 0,
+            rightsPopup: null,
+            rightsAllowed: false,
+            initInProgress: true
         };
     }
 
@@ -51,7 +55,7 @@ class MainPage extends React.Component {
     fetchInitData = async () => {
         axios({
             method: 'post',
-            url: '/api/init',
+            url: `${prefix}/api/init`,
             data: {
                 auth: this.props.this.auth
             }
@@ -64,34 +68,25 @@ class MainPage extends React.Component {
             this.setState({
                 user: data.user,
                 topUsers: data.top_users,
-                storeActionsCounter: data.store_actions_counter
             });
-        }).catch(e => {
-            const response = JSON.parse(e.request.response);
 
-            if (response.code === 422 && /user not found/i.test(response.message)) {
-                console.log('User not found');
+            this.props.shopStore.setCounter(data.store_actions_counter);
+        }).catch(e => {
+            if (e.request && e.request.response) {
+                const response = JSON.parse(e.request.response);
+
+                if (response.code === 422 && /user not found/i.test(response.message)) {
+                    console.log('User not found');
+                }
             }
-        })
+        }).finally(() => {
+            this.setState({
+                initInProgress: false
+            })
+        });
     };
 
-    fetchHistory = ({mainStore} = this.props) => {
-        if (this.state.history.length > 0) return false;
-
-        const userId = mainStore.user.info.user_id;
-
-        axios.post(`/api/history/${userId}/get`, {
-            auth: mainStore.auth,
-        }).then(r => {
-            const {status, data} = r.data;
-
-            if (!status) throw new Error('Failed to fetch history');
-
-            this.setState({ history: data })
-        }).catch(e => {
-
-        })
-    };
+    fetchHistory = ({mainStore} = this.props) => {};
 
     fetchCurrentUser = async () => {
         if (this.props.mainStore.userProfile) return false;
@@ -105,7 +100,54 @@ class MainPage extends React.Component {
         this.fetchInitData();
     }
 
-    profileModal = (modal = true, spinner = false) => {
+    rights = () => {
+        return new Promise((resolve, reject) => {
+            const close = () => {
+                this.setState({ rightsPopup: null });
+            };
+            const onClose = () => {
+                close();
+                reject(false);
+            };
+            const allow = () => {
+                close();
+                resolve(true);
+            };
+
+            const profileGranted = window.localStorage ? window.localStorage.getItem('Profile_granted') : null;
+
+            if (profileGranted === '1') return resolve(true);
+
+            this.setState({
+                rightsPopup:
+                    <Popup onClose={onClose}>
+                        <Title level="2" weight="semibold" style={{ marginBottom: 5, textTransform: 'uppercase' }}>
+                            Запрос доступа
+                        </Title>
+
+                        <Text weight="regular" style={{ paddingTop: 16, paddingBottom: 16 }}>
+                            Если вы желаете, чтобы данные о школе и городе были автоматически заполнены из вашего профиля,
+                            подтвердите доступ к данным вашей страницы.
+                        </Text>
+
+                        <VKButton onClick={allow}>OK</VKButton>
+                    </Popup>
+            })
+        })
+    };
+
+    profileModal = async (modal = true, spinner = false) => {
+        const {user} = this.props.mainStore;
+        const userInfoExist = user && user.info && user.info.city && user.info.school && user.info.class && user.info.teacher;
+
+        if (modal && !userInfoExist) {
+            const rights = await this.rights().catch(() => {return false;});
+
+            this.setState({
+                rightsAllowed: rights
+            });
+        }
+
         this.setState({
             activeModal: modal ? 'student_profile' : null,
             mainSpinner: spinner ? <ScreenSpinner /> : null
@@ -127,15 +169,28 @@ class MainPage extends React.Component {
     render() {
         const store = this.props.mainStore;
         const user = store.user;
-
         const modal = (
             <ProfileModal
                 show={this.state.activeModal}
                 onSending={() => { this.profileModal(false, true) }}
                 onClose={() => { this.profileModal(false, false) }}
+                rightsAllowed={this.state.rightsAllowed}
                 auth={this.props.this.auth}
             />
         );
+        const storeCounter = this.props.shopStore.counter > 0 ?
+            <Counter
+                onClick={() => {
+                    this.props.open('store', 'history')
+                }}
+                style={{
+                    background: 'var(--counter_prominent_background)',
+                    cursor: 'pointer'
+                }}
+                size="s"
+            >
+                {this.props.shopStore.counter}
+            </Counter> : null;
 
         return (
             <Root activeView={this.props.activeView}>
@@ -150,31 +205,27 @@ class MainPage extends React.Component {
                             >
                                 Счёт
                             </TabsItem>
-                            <TabsItem
+                            {/*<TabsItem
                                 onClick={() => {this.tab('history')}}
                                 selected={this.state.activeTab === 'history'}
                             >
                                 История
-                            </TabsItem>
+                            </TabsItem>*/}
                             <TabsItem
                                 onClick={() => {this.tab('store')}}
                                 selected={this.state.activeTab === 'store'}
-                                after={
-                                    <Counter size="s" style={{ background: 'var(--counter_prominent_background)' }}>
-                                        {this.state.storeActionsCounter}
-                                    </Counter>
-                                }
+                                after={storeCounter}
                             >
                                 Магазин
                             </TabsItem>
                         </Tabs>
 
                         {this.state.activeTab === 'main' &&
-                           <MainSection topUsers={this.state.topUsers} />
+                           <MainSection initInProgress={this.state.initInProgress} topUsers={this.state.topUsers} />
                         }
 
                         {this.state.activeTab === 'history' &&
-                            <HistorySection history={this.state.history} />
+                            <Div>...</Div>
                         }
 
                         {this.state.activeTab === 'store' &&
@@ -188,6 +239,8 @@ class MainPage extends React.Component {
                                 enabled={true}
                             />
                         }
+
+                        {this.state.rightsPopup}
                     </Panel>
                 </View>
 
@@ -219,6 +272,16 @@ class MainPage extends React.Component {
                                     storeSpinner: alert
                                 })
                             }}
+                        />
+                    </Panel>
+
+                    <Panel id="history">
+                        <HistorySection
+                            spinner={
+                                seen => {
+                                    this.setState({storeSpinner: seen ? <ScreenSpinner/> : null})
+                                }
+                            }
                         />
                     </Panel>
                 </View>

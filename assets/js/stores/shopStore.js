@@ -12,6 +12,8 @@ class shop {
 
     @observable products = [];
 
+    @observable counter = 0;
+
     @action setStoreInit = (init) => {
         this.storeInit = init;
     };
@@ -22,6 +24,10 @@ class shop {
 
     @action setProducts = (products) => {
         this.products = products;
+    };
+
+    @action setCounter = (counter) => {
+        this.counter = counter;
     };
 }
 

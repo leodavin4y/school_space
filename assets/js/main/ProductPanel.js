@@ -11,14 +11,15 @@ import {
     Snackbar, Avatar
 } from "@vkontakte/vkui";
 import {Icon16Cancel} from "@vkontakte/icons";
-import {PageDialog} from "@happysanta/vk-app-ui";
 import {declOfNum, emit} from "../utils";
 import axios from 'axios';
 import {inject, observer} from "mobx-react";
 import classNames from "classnames";
 import ImgCard from './ImgCard';
+import Popup from "../components/popup/popup";
+import '../../css/ProductPanel.css';
 
-@inject("mainStore")
+@inject("mainStore", "shopStore")
 @observer
 class ProductPanel extends React.Component {
     constructor(props) {
@@ -47,7 +48,7 @@ class ProductPanel extends React.Component {
             return this.popupShow();
         }
 
-        const url = `/api/products/${this.props.product.id}/buy`;
+        const url = `${prefix}/api/products/${this.props.product.id}/buy`;
         const data = {auth: this.props.mainStore.auth};
 
         this.props.spinner(true);
@@ -62,6 +63,12 @@ class ProductPanel extends React.Component {
                 }
 
                 this.props.onPurchase(result.data.order);
+                this.props.shopStore.setCounter(this.props.shopStore.counter + 1);
+
+                const user = this.props.mainStore.user;
+                user.info.balance = user.info.balance - this.props.product.price;
+
+                this.props.mainStore.setUser(user);
 
                 emit('open', {view: 'store', panel: 'success'});
             }).catch(e => {
@@ -84,7 +91,7 @@ class ProductPanel extends React.Component {
     };
 
     render() {
-        const {product} = this.props;
+        const {product, mainStore} = this.props;
 
         if (!product) return null;
 
@@ -100,33 +107,28 @@ class ProductPanel extends React.Component {
                 </PanelHeader>
 
                 <Div className="ProductView">
-                    {product.photo &&
-                        <ImgCard
-                            src={'/upload/products/' + product.photo}
-                            style={{ width: '100%', height: 200 }}
-                        />
-                    }
-
                     <Title level="1" weight="bold" style={{ marginBottom: 16 }}>{product.name}</Title>
 
-                    {product.description &&
-                        <Text weight="regular" style={{ marginBottom: 16 }}>{product.description}</Text>
-                    }
+                    <div style={{ overflow: 'hidden' }}>
+                        {product.photo &&
+                            <div
+                                className={classNames({"ImgCard": true, "mobile": mainStore.isMobile})}
+                                style={{ backgroundImage: 'url(' + prefix + '/upload/products/' + product.photo +')' }}
+                            />
+                        }
 
-                    <Button mode="commerce" size="l" onClick={this.buy}>
+                        {product.description &&
+                            <Text weight="regular" dangerouslySetInnerHTML={{ __html: product.description }}/>
+                        }
+                    </div>
+
+                    <Button mode="commerce" size="l" onClick={this.buy} style={{ marginTop: 15 }}>
                         Купить за {product.price} 💎 {declOfNum(product.price, ['Умникоин', 'Умникоина', 'Умникоинов'])}
                     </Button>
                 </Div>
 
                 {this.state.popup &&
-                    <PageDialog
-                        onClose={this.popupClose}
-                        className={classNames({
-                            "PageDialog": true,
-                            "PageDialog__window--fixed-width": true,
-                            "PageDialog__window--mobile": store.isMobile
-                        })}
-                    >
+                    <Popup onClose={this.popupClose}>
                         <Title level="1" weight="bold" style={{ fontSize: '1.3em', marginBottom: 16 }}>
                             Ученик, мало умникоинов
                         </Title>
@@ -139,7 +141,7 @@ class ProductPanel extends React.Component {
                         <Text weight="semibold">
                             Сейчас у вас: {store.user.info.balance} 💎 {declOfNum(store.user.info.balance, ['Умникоин', 'Умникоина', 'Умникоинов'])}
                         </Text>
-                    </PageDialog>
+                    </Popup>
                 }
 
                 {this.state.snack}

@@ -22,7 +22,7 @@ class SettingsPanel extends React.Component {
     wipe = () => {
         if (!confirm('Вы уверены?')) return false;
 
-        axios.post('/admin/wipe', {
+        axios.post(`${prefix}/admin/wipe`, {
             auth: this.props.mainStore.auth
         }).then(r => {
             const {status} = r.data;

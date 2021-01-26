@@ -8,11 +8,10 @@ import {
     withPlatform,
     Snackbar, Avatar, ScreenSpinner, Progress,
     InfoRow, Tooltip, Button as VKButton, Link as VKLink, Alert,
-    Spinner
+    Spinner, Cell
 } from "@vkontakte/vkui";
-import {PageDialog} from '@happysanta/vk-app-ui';
 import Calendar from "./Calendar";
-import {Icon24Camera, Icon16Done, Icon44Spinner} from "@vkontakte/icons";
+import {Icon24Camera, Icon16Done, Icon44Spinner, Icon24Mention, Icon24Note, Icon24Write} from "@vkontakte/icons";
 import axios from "axios";
 import bridge from '@vkontakte/vk-bridge';
 import moment from 'moment';
@@ -22,6 +21,7 @@ import {declOfNum, monthRus, randomStr} from "../utils";
 import classNames from "classnames";
 import ProfileModal from './ProfileModal';
 import {inject, observer} from "mobx-react";
+import Popup from '../components/popup/popup';
 
 moment.tz.setDefault("Europe/Moscow");
 
@@ -60,7 +60,9 @@ class GetCoinsPage extends React.Component {
             popupWaiting: false,
             popupCanceled: null,
             bestResultDay: null,
-            bestResultMonth: null
+            bestResultMonth: null,
+            rightsPopup: null,
+            rightsAllowed: false
         };
 
         this.userProfileIsExist = false;
@@ -85,7 +87,7 @@ class GetCoinsPage extends React.Component {
 
     calendar = () => {
         axios({
-            url: '/api/calendar/get',
+            url: `${prefix}/api/calendar/get`,
             method: 'post',
             data: {
                 auth: this.props.this.auth,
@@ -138,7 +140,7 @@ class GetCoinsPage extends React.Component {
         this.fetchBestResults();
         this.canViewTooltip();
 
-        this.messageSubscribe();
+        // this.messageSubscribe();
         if (window.location.hash === '#profile') this.studentProfileModal(true);
     }
 
@@ -146,7 +148,77 @@ class GetCoinsPage extends React.Component {
         bridge.unsubscribe(this.userDeclineHandler);
     }
 
+    rights = () => {
+        return new Promise((resolve, reject) => {
+            const close = () => {
+                this.setState({ rightsPopup: null });
+            };
+            const onClose = () => {
+                close();
+                reject(false);
+            };
+            const allow = () => {
+                close();
+                resolve(true);
+            };
+
+            const profileGranted = window.localStorage ? window.localStorage.getItem('Profile_granted') : null;
+
+            if (profileGranted === '1') return resolve(true);
+
+            this.setState({
+                rightsPopup:
+                    <Popup onClose={onClose}>
+                        <Title level="2" weight="semibold" style={{ marginBottom: 5, textTransform: 'uppercase' }}>
+                            Запрос доступа
+                        </Title>
+
+                        <Text weight="regular" style={{ paddingTop: 16, paddingBottom: 16 }}>
+                            Если вы желаете, чтобы данные о школе и городе были автоматически заполнены из вашего профиля,
+                            подтвердите доступ к данным вашей страницы.
+                        </Text>
+
+                        <VKButton onClick={allow}>OK</VKButton>
+                    </Popup>
+            })
+        })
+    };
+
+    rightsPopup = (seen, onAllow = null, onDecline = null) => {
+        const close = () => {this.setState({ rightsPopup: null })};
+        const onClose = () => {
+            close();
+            onDecline();
+        };
+        const allow = () => {
+            close();
+            onAllow();
+        };
+
+        this.setState({
+            rightsPopup:
+            seen ?
+                <Popup onClose={onClose}>
+                    <Title level="2" weight="semibold" style={{ marginBottom: 5, textTransform: 'uppercase' }}>
+                        Запрос доступа
+                    </Title>
+
+                    <Text weight="regular" style={{ paddingTop: 16, paddingBottom: 16 }}>
+                        Разрешите нашему сообществу отправлять вам личные сообщения.<br/><br/>
+                        Эта функция необходима для отправки уведомлений в ЛС.
+                    </Text>
+
+                    <Button onClick={allow}>OK</Button>
+                </Popup> :
+                null
+        })
+    };
+
     messageSubscribe = () => {
+        this.rightsPopup(true, this.showMessageSubDialog, this.alert);
+    };
+
+    showMessageSubDialog = () => {
         bridge.send("VKWebAppAllowMessagesFromGroup", {
             "group_id": GROUP_ID,
             "key": randomStr()
@@ -181,30 +253,31 @@ class GetCoinsPage extends React.Component {
     };
 
     inputFileChange = () => {
-        const reader = new FileReader();
         const files = this.inputFile.current.files;
 
         if (files.length === 0) return false;
 
-        const file = files[files.length - 1];
+        files.forEach(file => {
+            const reader = new FileReader();
 
-        reader.onload = (e) => {
-            const photo = e.target.result;
-            const photos = this.state.photos;
-            const blob = new Blob([new Uint8Array(photo)], {type: file.type});
+            reader.onload = (e) => {
+                const photo = e.target.result;
+                const photos = this.state.photos;
+                const blob = new Blob([new Uint8Array(photo)], {type: file.type});
 
-            photos.push({
-                url: URL.createObjectURL(blob),
-                name: file.name,
-                blob: blob
-            });
+                photos.push({
+                    url: URL.createObjectURL(blob),
+                    name: file.name,
+                    blob: blob
+                });
 
-            this.setState({
-                photos: photos
-            });
-        };
+                this.setState({
+                    photos: photos
+                });
+            };
 
-        reader.readAsArrayBuffer(file);
+            reader.readAsArrayBuffer(file);
+        });
     };
 
     inputTeacher = (e) => {
@@ -264,7 +337,7 @@ class GetCoinsPage extends React.Component {
 
         const response = await axios({
             method: 'post',
-            url: '/api/profile/exist',
+            url: `${prefix}/api/profile/exist`,
             data: data
         });
 
@@ -350,7 +423,15 @@ class GetCoinsPage extends React.Component {
     send = async () => {
         const profileIsExist = await this.profileExist();
 
-        if (!profileIsExist) return this.studentProfileModal(true);
+        if (!profileIsExist) {
+            const rights = await this.rights().catch(() => {return false;});
+
+            this.setState({
+                rightsAllowed: rights
+            });
+
+            return this.studentProfileModal(true);
+        }
 
         const data = new FormData();
 
@@ -364,7 +445,7 @@ class GetCoinsPage extends React.Component {
 
         axios({
             method: 'post',
-            url: '/api/points/store',
+            url: `${prefix}/api/points/store`,
             headers: {
                 'Content-Type': `multipart/form-data; boundary=${data._boundary}`,
             },
@@ -381,6 +462,8 @@ class GetCoinsPage extends React.Component {
             this.setState({photos: []});
 
             window.history.back();
+
+            if (!response.data.data.msg_allowed) setTimeout(this.messageSubscribe, 1000);
         }).catch(e => {
             this.showSnackbar(e.code === 413 ? 'Ошибка: Слишком большой файл' : 'Ошибка: ' + e.message);
         }).finally(() => {
@@ -408,7 +491,7 @@ class GetCoinsPage extends React.Component {
         const store = () => {
             return axios({
                 method: 'post',
-                url: '/api/profile/store',
+                url: `${prefix}/api/profile/store`,
                 data: {
                     city: this.state.city.trim(),
                     school: this.state.school.trim(),
@@ -501,7 +584,7 @@ class GetCoinsPage extends React.Component {
     fetchMonthTotal = (monthNum) => {
         return axios({
             method: 'post',
-            url: '/api/profile/reports/points-per-month',
+            url: `${prefix}/api/profile/reports/points-per-month`,
             data: {
                 month: parseInt(monthNum),
                 auth: this.props.this.auth
@@ -517,7 +600,7 @@ class GetCoinsPage extends React.Component {
     fetchBestResults = () => {
         return axios({
             method: 'post',
-            url: '/api/profile/reports/best-results',
+            url: `${prefix}/api/profile/reports/best-results`,
             data: {
                 auth: this.props.this.auth
             }
@@ -549,6 +632,7 @@ class GetCoinsPage extends React.Component {
         const modal =
             <ProfileModal
                 show={this.state.activeModal}
+                rightsAllowed={this.state.rightsAllowed}
                 onSending={() => { this.setState({ activeModal: null, popout: <ScreenSpinner/> }) }}
                 onResult={onProfileStored}
                 onClose={() => { this.setState({ activeModal: null, popout: null }) }}
@@ -603,11 +687,11 @@ class GetCoinsPage extends React.Component {
 
                         {bestDay &&
                             <Div>
-                                <Title level="1" weight="semibold" style={{ marginBottom: 15 }}>🔥 Лучший ваш результат 🔥</Title>
+                                <Title level="1" weight="semibold" style={{ marginBottom: 15 }}>🔥 Лучший ваш результат</Title>
                                 <div>
                                     <Text>
                                         <Span text={bestDay.created_at}/> вы конвертировали <Span text={bestDay.amount}/> {coins(bestDay.amount)} <br/>
-                                        В <Span text={monthRus(bestMonth.month_num, 2)}/> вы собрали <Span text={bestMonth.amount}/> {coins(bestMonth.amount)}
+                                        В <Span text={monthRus(bestMonth.month_num - 1, 2)}/> вы собрали <Span text={bestMonth.amount}/> {coins(bestMonth.amount)}
                                     </Text>
                                 </div>
                             </Div>
@@ -616,14 +700,7 @@ class GetCoinsPage extends React.Component {
                         {this.state.snackbar}
 
                         {this.state.popupWaiting &&
-                            <PageDialog
-                                onClose={() => {this.setState({popupWaiting:false})}}
-                                className={classNames({
-                                    "PageDialog": true,
-                                    "PageDialog__window--fixed-width": true,
-                                    "PageDialog__window--mobile": this.props.mobile
-                                })}
-                            >
+                            <Popup onClose={() => {this.setState({popupWaiting:false})}}>
                                 <div style={{ width: 44, margin: '0 auto 15px auto' }}>
                                     {/*<Icon44Spinner style={{ color: 'var(--accent)' }}/>*/}
                                     <Spinner size="large" style={{ color: 'var(--accent)', marginTop: 20 }} />
@@ -648,10 +725,11 @@ class GetCoinsPage extends React.Component {
                                         <VKButton size="l" mode="primary" style={{ cursor: 'pointer' }}>Чат-бот</VKButton>
                                     </VKLink>
                                 </Div>
-                            </PageDialog>
+                            </Popup>
                         }
 
                         {this.state.popupCanceled}
+                        {this.state.rightsPopup}
                     </Panel>
 
                     <Panel id="upload">
@@ -661,6 +739,14 @@ class GetCoinsPage extends React.Component {
                         >
                             Загрузка фото
                         </PanelHeader>
+
+                        {this.state.rightsPopup}
+                        <Group>
+                            <Cell expandable={false} multiline={true} before={<Icon24Mention/>}>Мы принимаем фотографии бумажного и электронного дневников</Cell>
+                            <Cell expandable={false} multiline={true} before={<Icon24Note/>}>Должны быть видны месяц и дата</Cell>
+                            <Cell expandable={false} multiline={true} before={<Icon24Write/>}>В случае с бумажным дневником оценки должны быть с подписью учителя</Cell>
+                        </Group>
+
 
                         {this.state.photos.length > 0 &&
                             <Group header={<Header mode="secondary">Загружено фото: {this.state.photos.length}</Header>}>

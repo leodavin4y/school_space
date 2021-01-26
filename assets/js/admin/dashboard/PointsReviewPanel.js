@@ -38,7 +38,7 @@ class PointsReviewPanel extends React.Component {
 
         axios({
             method: 'post',
-            url: '/admin/points/get',
+            url: `${prefix}/admin/points/get`,
             data: {
                 verify: type === 'verified',
                 cancel: type === 'cancelled',
@@ -54,8 +54,6 @@ class PointsReviewPanel extends React.Component {
                 this.ajaxProgress(false);
                 return false;
             }
-
-            console.log([...this.state.reviews, ...points]);
 
             this.setState({
                 reviews: [...this.state.reviews, ...points]

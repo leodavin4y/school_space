@@ -2,35 +2,32 @@
 
 namespace App\Controller;
 
-use App\Entity\Products;
-use App\Entity\PromoCodes;
-use App\Entity\Users;
-use App\Kernel;
-use App\Repository\AdminsRepository;
-use App\Repository\OrdersRepository;
-use App\Repository\ProductsRepository;
-use App\Repository\PromoCodesRepository;
-use App\Repository\TopUsersRepository;
-use App\Repository\UsersRepository;
-use App\Service\UploadFiles;
-use App\Service\Utils;
-use App\Service\VKAPI;
-use App\Service\Letscover;
-use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpKernel\Exception\HttpException;
-use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Component\Validator\Constraints as Assert;
-use App\Service\SerializerHelper;
-use App\Entity\Admins;
-use App\Entity\Points;
-use App\Entity\PointsPhotos;
-use App\Repository\PointsRepository;
 use Doctrine\Common\Collections\Criteria;
 use Cocur\BackgroundProcess\BackgroundProcess;
+use Doctrine\ORM\EntityManagerInterface;
+use App\Kernel;
+use App\Service\UploadFiles;
+use App\Service\Utils;
+use App\Service\VKAPI;
+use App\Service\Letscover;
+use App\Service\SerializerHelper;
+use App\Entity\Products;
+use App\Entity\PromoCodes;
+use App\Entity\Users;
+use App\Entity\Admins;
+use App\Repository\AdminsRepository;
+use App\Repository\OrdersRepository;
+use App\Repository\ProductsRepository;
+use App\Repository\PromoCodesRepository;
+use App\Repository\UsersRepository;
+use App\Repository\PointsRepository;
 
 /**
  * Админка для управления данными приложения
@@ -227,6 +224,23 @@ class AdminController extends BaseApiController {
     }
 
     /**
+     * Генерирует текст уведомления об успешной обработке оценок
+     *
+     * @param int $reqId
+     * @param int $points
+     * @param int $curBalance
+     * @return string
+     */
+    private function buildApproveMessage(int $reqId, int $points, int $curBalance): string
+    {
+        $addCoinsStr = Utils::declOfNum($points, ['%d умникоин', '%d умникоина', '%d умникоинов']);
+
+        return "Ваша заявка на получение умникоинов за оценки #{$reqId} одобрена!\n\n" .
+            "+ {$addCoinsStr}\n" .
+            "Баланс: {$curBalance}";
+    }
+
+    /**
      * Обработка присланной заявки на проверку оценок.
      * Установить или изменить оценку
      *
@@ -236,10 +250,11 @@ class AdminController extends BaseApiController {
      * @param ValidatorInterface $validator
      * @param PointsRepository $pointsRep
      * @param VKAPI $vk
+     * @param Kernel $kernel
      * @throws \Exception
      * @return JsonResponse
      */
-    public function setPoints(string $action, ValidatorInterface $validator, PointsRepository $pointsRep, VKAPI $vk): JsonResponse
+    public function setPoints(string $action, ValidatorInterface $validator, PointsRepository $pointsRep, VKAPI $vk, Kernel $kernel): JsonResponse
     {
         $params = $this->postJson;
         $constraints = new Assert\Collection([
@@ -287,21 +302,35 @@ class AdminController extends BaseApiController {
             $em->persist($point);
             $em->persist($user);
 
+            if ($action === 'set') {
+                $pointPhotos = $point->getPhotos();
+                $photoDir = $kernel->getProjectDir() . '/var/upload';
+                $photos = [];
+
+                try {
+                    foreach ($pointPhotos as $pointPhoto) {
+                        $photos[] = $vk->attachPhotoToDialog($user->getUserId(), $photoDir . '/' . $pointPhoto->getName());
+                    }
+
+                    $msg = $this->buildApproveMessage($params['id'], $params['amount'], $user->getBalance());
+                    $vk->sendMsg($user->getUserId(), $msg, $photos);
+
+                    foreach ($pointPhotos as $pointPhoto) {
+                        @unlink($photoDir . '/' . $pointPhoto->getName());
+                    }
+                } catch (\Exception $e) {
+                    $msgIsBlocked = in_array($e->getCode(), [900, 901, 902]);
+                    $msg = $msgIsBlocked ? 'Пользователь запретил отправку сообщений или добавил в ЧС' : $e->getMessage();
+
+                    throw new HttpException(424, $msg);
+                }
+            }
+
             $em->flush();
             $connect->commit();
-
-            if ($action === 'set') {
-                try {
-                    $vk->sendMsg(
-                        $user->getUserId(),
-                        "Ваша заявка на получение умникоинов за оценки #{$params['id']} одобрена!\n\n" .
-                        '+ ' . Utils::declOfNum($params['amount'], ['%d умникоин', '%d умникоина', '%d умникоинов']) . "\n" .
-                        "Баланс: {$user->getBalance()}"
-                    );
-                } catch (\Exception $e) {}
-            }
         } catch (\Exception $e) {
             $connect->rollBack();
+
             throw $e;
         }
 
@@ -918,6 +947,47 @@ class AdminController extends BaseApiController {
 
             throw $e;
         }
+
+        return $this->createResponse();
+    }
+
+    /**
+     * Установить таланты
+     *
+     * @Route("/admin/users/{userId}/talent/set", name="admin_user_talent_set")
+     *
+     * @param int $userId
+     * @param ValidatorInterface $validator
+     * @param UsersRepository $usersRep
+     * @return JsonResponse
+     */
+    public function userSetTalent(int $userId, ValidatorInterface $validator, UsersRepository $usersRep)
+    {
+        $params = $this->postJson;
+        $constraints = new Assert\Collection([
+            'fields' => [
+                'talent' => [
+                    new Assert\NotBlank(),
+                    new Assert\Type('numeric'),
+                    new Assert\Range([
+                        'min' => 0,
+                    ])
+                ]
+            ],
+            'allowExtraFields' => true
+        ]);
+        $errors = $validator->validate($params, $constraints);
+
+        if (count($errors) > 0) throw new HttpException(422, 'Validation error');
+
+        $user = $usersRep->find($userId);
+
+        if (!$user) throw new HttpException(422, 'User not found');
+
+        $user->setTalent($params['talent']);
+
+        $this->em->persist($user);
+        $this->em->flush();
 
         return $this->createResponse();
     }

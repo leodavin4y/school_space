@@ -47,6 +47,7 @@ class WipeBalances extends Command
             Letscover::subBalance($user->userId, $user->points);
         }
 
+        $this->usersRep->calcTalents();
         $this->usersRep->wipeBalances();
 
         $admins = $this->adminsRep->findAll();

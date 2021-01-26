@@ -1,5 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import classNames from 'classnames';
 
 class ImgCard extends React.Component {
     constructor(props) {
@@ -10,11 +11,11 @@ class ImgCard extends React.Component {
         const style = Object.assign({
             backgroundColor: 'var(--background_light)',
             backgroundImage: 'url("' + (this.props.src) + '")',
-            backgroundSize: 'contain',
+            backgroundSize: 'cover',
             backgroundRepeat: 'no-repeat',
             backgroundPosition: 'center',
             borderRadius: 10,
-            marginBottom: 15
+            margin: '0 15px 0 0',
         }, this.props.style ?? {});
         const props = {};
 
@@ -26,6 +27,7 @@ class ImgCard extends React.Component {
 
         return (
             <div
+                className={classNames({"ImgCard": true, "mobile": this.props.mobile})}
                 {...props}
                 style={style}
             />
@@ -34,7 +36,8 @@ class ImgCard extends React.Component {
 }
 
 ImgCard.propTypes = {
-    src: PropTypes.string
+    src: PropTypes.string,
+    mobile: PropTypes.bool
 };
 
 export default ImgCard;

@@ -25,7 +25,7 @@ class AdminLoginPage extends React.Component {
     }
 
     auth = () => {
-        return axios.post('/admin/login', {auth: this.props.this.auth})
+        return axios.post(`${prefix}/admin/login`, {auth: this.props.this.auth})
             .then(response => {
                 return response.data.status ? response.data.data : false;
             }).catch(e => {
@@ -55,7 +55,7 @@ class AdminLoginPage extends React.Component {
 
         this.props.authenticate(() => {
             console.log('Redirected to admin');
-            this.props.this.redirect("/admin/");
+            this.props.this.redirect(`${prefix}/admin/`);
         });
     };
 

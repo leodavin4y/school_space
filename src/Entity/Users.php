@@ -57,6 +57,12 @@ class Users
     private $balance = 0;
 
     /**
+     * @ORM\Column(type="decimal", precision=7, scale=2, options={"default" : 0, "unsigned"=true})
+     * @Groups({"Students"})
+     */
+    private $talent = 0;
+
+    /**
      * @ORM\Column(type="string", length=255)
      * @Groups({"Students"})
      */
@@ -184,6 +190,18 @@ class Users
     public function setBalance(int $balance): self
     {
         $this->balance = $balance;
+
+        return $this;
+    }
+
+    public function getTalent(): float
+    {
+        return $this->talent;
+    }
+
+    public function setTalent(float $talent): self
+    {
+        $this->talent = $talent;
 
         return $this;
     }

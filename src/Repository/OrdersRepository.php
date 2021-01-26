@@ -32,7 +32,7 @@ class OrdersRepository extends ServiceEntityRepository
             ->getOneOrNullResult();
     }
 
-    public function findAllByCompleted(bool $isCompleted, int $page = 1, int $pageSize = 5)
+    public function findAllByCompleted(bool $isCompleted, int $page = 1, int $pageSize = 10)
     {
         $query = $this->createQueryBuilder('o')
             ->select()
@@ -86,6 +86,24 @@ class OrdersRepository extends ServiceEntityRepository
         $result = $stmt->fetch();
 
         return $result ? $result['result'] : 0;
+    }
+
+    public function get(int $userId, int $page, int $pageSize = 10)
+    {
+        $query = $this->createQueryBuilder('o')
+            ->select()
+            ->where('o.user = :user_id')
+            ->orderBy('o.id', 'DESC')
+            ->setParameter('user_id', $userId)
+            ->getQuery();
+
+        $paginator = new \Doctrine\ORM\Tools\Pagination\Paginator($query);
+
+        return $paginator
+            ->getQuery()
+            ->setFirstResult($pageSize * ($page - 1)) // Offset
+            ->setMaxResults($pageSize)                          // Limit
+            ->getResult();
     }
 
 }

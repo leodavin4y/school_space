@@ -30,7 +30,7 @@ class ProductsManage extends React.Component {
     removeProduct = (product) => {
         this.spinner(true);
 
-        axios.post(`/admin/products/${product.id}/delete`, {
+        axios.post(`${prefix}/admin/products/${product.id}/delete`, {
             auth: this.props.mainStore.auth
         }).then(response => {
             if (!response.data.status) throw new Error('Delete failure');
@@ -46,7 +46,7 @@ class ProductsManage extends React.Component {
     disableProduct = (product) => {
         this.spinner(true);
 
-        axios.post(`/admin/products/${product.id}/disable`, {
+        axios.post(`${prefix}/admin/products/${product.id}/disable`, {
             auth: this.props.mainStore.auth
         }).then(r => {
             if (!r.data.status) throw new Error('Disabling failure');
@@ -62,7 +62,7 @@ class ProductsManage extends React.Component {
     enableProduct = (product) => {
         this.spinner(true);
 
-        axios.post(`/admin/products/${product.id}/enable`, {
+        axios.post(`${prefix}/admin/products/${product.id}/enable`, {
             auth: this.props.mainStore.auth
         }).then(r => {
             if (!r.data.status) throw new Error('Disabling failure');

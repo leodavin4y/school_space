@@ -9,7 +9,7 @@ import {
     Header,
     SimpleCell,
     InfoRow,
-    withPlatform,
+    withPlatform, ScreenSpinner,
 } from '@vkontakte/vkui';
 import axios from "axios";
 import moment from 'moment';
@@ -64,14 +64,14 @@ class ReviewItem extends React.Component {
 
     pointToUser = (pointId, {user, onCoinsSet, onCoinsUpdate, onSnack, approveButton} = this.props) => {
         const points = parseInt(prompt('Введите кол-во баллов для "' + user.first_name + '"'));
-
         if (isNaN(points)) return false;
 
+        this.props.onPopout(<ScreenSpinner/>);
         const action = approveButton ? 'set' : 'update';
 
         axios({
             method: 'post',
-            url: `/admin/points/${action}`,
+            url: `${prefix}/admin/points/${action}`,
             data: {
                 id: pointId,
                 amount: points,
@@ -84,7 +84,15 @@ class ReviewItem extends React.Component {
 
             return approveButton ? onCoinsSet() : onCoinsUpdate(points);
         }).catch(e => {
+            if (e.request && e.request.response) {
+                const data = JSON.parse(e.request.response);
+
+                if (data.code === 424) return onSnack(data.message);
+            }
+
             onSnack('Ошибка: Не удалось начислить баллы пользователю');
+        }).finally(() => {
+            this.props.onPopout(null);
         });
     };
 
@@ -98,7 +106,7 @@ class ReviewItem extends React.Component {
 
         axios({
             method: 'post',
-            url: `/admin/points/${pointId}/cancel`,
+            url: `${prefix}/admin/points/${pointId}/cancel`,
             data: {
                 comment: comment,
                 auth: this.props.mainStore.auth
@@ -199,8 +207,8 @@ class ReviewItem extends React.Component {
                                     <div
                                         key={index}
                                         className='ReviewItem__img'
-                                        style={{ backgroundImage: 'url(' + '/upload/' + photo.name + ')' }}
-                                        onClick={() => {this.openPhoto('/upload/' + photo.name)}}
+                                        style={{ backgroundImage: 'url(' + prefix + '/upload/' + photo.name + ')' }}
+                                        onClick={() => {this.openPhoto(prefix + '/upload/' + photo.name)}}
                                     />
                                 )}
                             </div>

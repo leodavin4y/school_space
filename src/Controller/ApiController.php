@@ -2,15 +2,8 @@
 
 namespace App\Controller;
 
-use App\Entity\History;
-use App\Entity\Orders;
-use App\Repository\HistoryRepository;
-use App\Repository\OrdersRepository;
-use App\Repository\ProductsRepository;
-use App\Repository\TopUsersRepository;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
@@ -18,14 +11,15 @@ use Symfony\Component\Validator\Constraints as Assert;
 use App\Service\UploadFiles;
 use App\Service\SerializerHelper;
 use App\Service\VKAPI;
-use App\Service\Utils;
-use App\Service\Letscover;
-use App\Entity\Users;
 use App\Entity\Points;
 use App\Entity\PointsPhotos;
+use App\Entity\History;
 use App\Repository\PointsRepository;
 use App\Repository\AdminsRepository;
 use App\Repository\UsersRepository;
+use App\Repository\HistoryRepository;
+use App\Repository\OrdersRepository;
+use App\Repository\TopUsersRepository;
 
 class ApiController extends BaseApiController {
 
@@ -88,35 +82,6 @@ class ApiController extends BaseApiController {
     }
 
     /**
-     * @Route("/api/users", name="api_users")
-     * @param ValidatorInterface $validator
-     * @param TopUsersRepository $topUsersRep
-     * @return JsonResponse
-     */
-    public function topUsers(ValidatorInterface $validator, TopUsersRepository $topUsersRep)
-    {
-        $params = $this->postJson;
-        $constraints = new Assert\Collection([
-            'fields' => [
-                'page' => [
-                    new Assert\NotBlank(),
-                    new Assert\Type('int'),
-                    new Assert\Range([
-                        'min' => 1,
-                    ])
-                ],
-            ],
-            'allowExtraFields' => true
-        ]);
-
-        $errors = $validator->validate($params, $constraints);
-
-        if (count($errors) > 0) throw new HttpException(422, 'Validation error');
-
-        return $this->createResponse($topUsersRep->getMostActive($params['page'], 10));
-    }
-
-    /**
      * Отдает массив Points (дат) за которые уже есть оценки в тек. месяце
      *
      * @Route("/api/calendar/get", methods={"POST"}, name="api_calendar_get")
@@ -125,7 +90,6 @@ class ApiController extends BaseApiController {
      */
     public function calendar(PointsRepository $pointsRep): JsonResponse
     {
-
         $points = $pointsRep->getPointsByCurMonth($this->uid);
 
         foreach ($points as $key => $point) {
@@ -150,11 +114,11 @@ class ApiController extends BaseApiController {
      * @param UploadFiles $uploadFiles
      * @param ValidatorInterface $validator
      * @param UsersRepository $usersRep
-     * @param PointsRepository $pointRep
+     * @param VKAPI $vk
      * @return JsonResponse
      * @throws \Exception
      */
-    public function uploadDiaries(UploadFiles $uploadFiles, ValidatorInterface $validator, UsersRepository $usersRep, PointsRepository $pointRep)
+    public function uploadDiaries(UploadFiles $uploadFiles, ValidatorInterface $validator, UsersRepository $usersRep, VKAPI $vk)
     {
         if (is_null($this->uid)) throw new HttpException(403, 'Access forbidden. Expected param: vk_user_id');
 
@@ -245,135 +209,15 @@ class ApiController extends BaseApiController {
             throw $e;
         }
 
-        return $this->createResponse();
-    }
-
-    /**
-     * Сохранение профиля школьника
-     *
-     * @Route("/api/profile/store", methods={"POST"}, name="api_profile_store")
-     * @param ValidatorInterface $validator
-     * @param UsersRepository $usersRep
-     * @return JsonResponse
-     * @throws \Exception
-     */
-    public function profileStore(ValidatorInterface $validator, UsersRepository $usersRep)
-    {
-        if (is_null($this->uid)) throw new HttpException(403, 'Access forbidden. Expected param: vk_user_id');
-
-        $params = $this->postJson;
-        $constraints = new Assert\Collection([
-            'fields' => [
-                'city' => [
-                    new Assert\NotBlank,
-                    new Assert\Type('string'),
-                    new Assert\Length([
-                        'min' => 2,
-                        'max' => 255
-                    ])
-                ],
-                'school' => [
-                    new Assert\NotBlank,
-                    new Assert\Type('string'),
-                    new Assert\Length([
-                        'min' => 1,
-                        'max' => 255
-                    ])
-                ],
-                'class' => [
-                    new Assert\NotBlank,
-                    new Assert\Type('int'),
-                    new Assert\Range([
-                        'min' => 1,
-                        'max' => 11
-                    ])
-                ],
-                'teacher' => [
-                    new Assert\NotBlank,
-                    new Assert\Type('string'),
-                    new Assert\Length(['max' => 255, 'min' => 10])
-                ],
-            ],
-            'allowExtraFields' => true
+        $msgSubscribe = $vk->method('messages.isMessagesFromGroupAllowed', [
+            'group_id' => $_ENV['GROUP_ID'],
+            'user_id' => $this->uid,
+            'access_token' => $_ENV['GROUP_TOKEN'],
+            'v' => 5.126
         ]);
-        $errors = $validator->validate($params, $constraints);
-
-        if (count($errors) > 0) throw new HttpException(422, 'Validation error');
-
-        $params = (object) $params;
-        $uid = $this->uid;
-        $em = $this->getDoctrine()->getManager();
-        $student = $usersRep->find($uid);
-
-        if (!$student) {
-            $student = new Users();
-        }
-
-        $profile = VKAPI::usersGet($uid)[0];
-
-        $student->setUserId($uid)
-            ->setFirstName($profile->first_name)
-            ->setLastName($profile->last_name)
-            ->setPhoto100($profile->photo_100)
-            ->setCity($params->city)
-            ->setSchool($params->school)
-            ->setClass($params->class)
-            ->setTeacher($params->teacher);
-
-        $em->persist($student);
-        $em->flush();
-
-        Letscover::addBalance($uid, 0);
-
-        return $this->createResponse();
-    }
-
-    /**
-     * @Route("/api/profile/get", methods={"POST"}, name="api_profile_get")
-     * @param UsersRepository $usersRep
-     * @return JsonResponse
-     * @throws \Doctrine\Common\Annotations\AnnotationException
-     * @throws \Symfony\Component\Serializer\Exception\ExceptionInterface
-     */
-    public function profileGet(UsersRepository $usersRep)
-    {
-        if (is_null($this->uid)) throw new HttpException(403, 'Access forbidden. Expected param: vk_user_id');
-
-        /**
-         * @param \DateTime $inner
-         * @return int - timestamp in ms
-         */
-        $converter = function($inner) {return $inner->getTimestamp() * 1000;};
-        $user = (new SerializerHelper())
-            ->convertField('date_at', $converter)
-            ->convertField('created_at', $converter)
-            ->getSerializer()
-            ->normalize($usersRep->find($this->uid), 'json', ['groups' => ['Students']]);
 
         return $this->createResponse([
-            'user' => $user
-        ]);
-    }
-
-    /**
-     * Проверка наличия заполненного профиля школьника
-     *
-     * @Route("/api/profile/exist", methods={"POST"}, name="api_profile_exist")
-     * @param UsersRepository $usersRep
-     * @return JsonResponse
-     */
-    public function profileCheckExist(UsersRepository $usersRep)
-    {
-        if (is_null($this->uid)) throw new HttpException(403, 'Access forbidden. Expected param: vk_user_id');
-
-        $student = $usersRep->find($this->uid);
-
-        return $this->createResponse([
-            'exist' => !is_null($student) &&
-                !is_null($student->getCity()) &&
-                !is_null($student->getSchool()) &&
-                !is_null($student->getClass()) &&
-                !is_null($student->getTeacher())
+            'msg_allowed' => $msgSubscribe->response->is_allowed
         ]);
     }
 
@@ -454,204 +298,13 @@ class ApiController extends BaseApiController {
     }
 
     /**
-     * @Route("/api/friends/get", methods={"POST"}, name="api_friends_get")
-     * @param ValidatorInterface $validator
-     * @param TopUsersRepository $topUsersRep
-     * @return JsonResponse
-     */
-    public function friendsStats(ValidatorInterface $validator, TopUsersRepository $topUsersRep)
-    {
-        $params = $this->postJson;
-        $constraints = new Assert\Collection([
-            'fields' => [
-                'friends' => new Assert\All([
-                    new Assert\NotBlank,
-                    new Assert\Type('int'),
-                    new Assert\Range([
-                        'min' => 1
-                    ])
-                ]),
-            ],
-            'allowExtraFields' => true
-        ]);
-
-        if (count($validator->validate($params, $constraints)) > 0) throw new HttpException(422, 'Validation error');
-
-        $friends = $topUsersRep->getByIds($params['friends']);
-
-        return $this->createResponse($friends);
-    }
-
-    /**
-     * @Route("/api/products/get", methods={"POST"}, name="api_products_get")
-     * @param ProductsRepository $productsRep
-     * @param ValidatorInterface $validator
-     * @return JsonResponse
-     * @throws \Doctrine\Common\Annotations\AnnotationException
-     * @throws \Symfony\Component\Serializer\Exception\ExceptionInterface
-     */
-    public function getProducts(ProductsRepository $productsRep, ValidatorInterface $validator)
-    {
-        $params = $this->postJson;
-        $constraints = new Assert\Collection([
-            'fields' => [
-                'enabled' => new Assert\Optional([
-                    new Assert\Type('bool')
-                ])
-            ],
-            'allowExtraFields' => true
-        ]);
-
-        if (count($validator->validate($params, $constraints)) > 0) throw new HttpException(422, 'Validation error');
-
-        $products = $productsRep->findByEnabled($params['enabled'] ?? null);
-
-        /**
-         * @param \DateTime $inner
-         * @return int - timestamp in ms
-         */
-        $converter = function($inner) {return $inner->getTimestamp() * 1000;};
-        $products = (new SerializerHelper())
-            ->convertField('date_at', $converter)
-            ->convertField('created_at', $converter)
-            ->getSerializer()
-            ->normalize($products, 'json', ['groups' => ['Products']]);
-
-        return $this->createResponse($products);
-    }
-
-    /**
-     * @Route("/api/products/{productId}/buy", methods={"POST"}, name="api_products_buy")
-     * @param int $productId
-     * @param UsersRepository $usersRep
-     * @param ProductsRepository $productsRep
-     * @param OrdersRepository $ordersRep
-     * @param SerializerHelper $serializerHelper
-     * @return JsonResponse
-     * @throws \Doctrine\Common\Annotations\AnnotationException
-     * @throws \Symfony\Component\Serializer\Exception\ExceptionInterface
-     */
-    public function buyProduct(
-        int $productId,
-        UsersRepository $usersRep,
-        ProductsRepository $productsRep,
-        OrdersRepository $ordersRep,
-        SerializerHelper $serializerHelper
-    ) {
-        if (is_null($this->uid)) throw new HttpException(403, 'Access forbidden. Expected param: vk_user_id');
-
-        $user = $usersRep->find($this->uid);
-
-        if (!$user) throw new HttpException(422, 'User not found');
-
-        $product = $productsRep->find($productId);
-
-        if (!$product) throw new HttpException(422, 'Product not found');
-
-        if ($product->getRemaining() <= 0) {
-            return $this->createResponse(['msg' => 'Нет в наличии'], false);
-        }
-
-        if ($product->getPrice() > $user->getBalance()) {
-            return $this->createResponse(['msg' => 'Недостаточно средств на счету'], false);
-        }
-
-        $allowedPurchases = $product->getRestrictFreq();
-        $restrictInterval = $product->getRestrictFreqTime();
-
-        if (!is_null($allowedPurchases) && !is_null($restrictInterval)) {
-            $ordersCount = $ordersRep->getOrdersCountInInterval(
-                $user->getUserId(),
-                $productId,
-                $restrictInterval
-            );
-
-            if ($ordersCount >= $allowedPurchases) {
-                $remaining = $ordersRep->calcFreqRemaining($user->getUserId(), $productId, $restrictInterval, $allowedPurchases);
-                $remaining = sprintf("%sч %'02sм", intval($remaining / 60 / 60), abs(intval(($remaining % 3600) / 60)));
-
-                $h = intval($restrictInterval / 60 / 60);
-                $m = abs(intval(($restrictInterval % 3600) / 60));
-                $restricted = ($h > 0 ? "{$h}ч " : "") . ($m > 0 ? "{$m}м" : "");
-
-                return $this->createResponse([
-                    'msg' => 'Покупать можно не чаще чем ' .
-                        Utils::declOfNum($allowedPurchases, ['%d раз', '%d раза', '%d раз']) .
-                        ' за ' . $restricted. '. Осталось: ' . $remaining
-                ], false);
-            }
-        }
-
-        $em = $this->getDoctrine()->getManager();
-        $connect = $this->getDoctrine()->getConnection();
-        $connect->beginTransaction();
-
-        try {
-            $user->setBalance($user->getBalance() - $product->getPrice());
-            $sendToApi = Letscover::subBalance($user->getUserId(), $product->getPrice());
-
-            if (!$sendToApi) throw new \Exception('Failed to set letscover balance');
-
-            $product->setRemaining($product->getRemaining() - 1);
-            $order = (new Orders())
-                ->setUser($user)
-                ->setProduct($product)
-                ->setCreatedAt(new \DateTime());
-
-            if ($product->getPromoCount()) {
-                if (count($promoCodes = $product->getUnusedPromoCodes()) === 0) throw new \Exception('Promo codes not found', 100);
-
-                $promoCode = $promoCodes[mt_rand(0, count($promoCodes) - 1)];
-                $promoCode->setUsed(true);
-                $order->setPromoCode($promoCode);
-                $product->setPromoCount($product->getPromoCount() - 1);
-                $em->persist($promoCode);
-            }
-
-            $history = (new History())
-                ->setOrders($order)
-                ->setUser($user);
-
-            $em->persist($user);
-            $em->persist($product);
-            $em->persist($order);
-            $em->persist($history);
-
-            $em->flush();
-            $connect->commit();
-        } catch (\Exception $e) {
-            $connect->rollback();
-
-            if ($e->getCode() === 100) {
-                return $this->createResponse(['msg' => 'Нет в наличии'], false);
-            }
-
-            throw $e;
-        }
-
-        /**
-         * @param \DateTime $inner
-         * @return int - timestamp in ms
-         */
-        $converter = function($inner) {return $inner->getTimestamp() * 1000;};
-        $order = $serializerHelper
-            ->convertField('created_at', $converter)
-            ->getSerializer()
-            ->normalize($order, 'json', ['groups' => ['Orders', 'Promo', 'Products']]);
-
-        return $this->createResponse([
-           'order' => $order
-        ]);
-    }
-
-    /**
      * @Route("/api/orders/{orderId}/message/send", methods={"POST"}, name="api_orders_message")
      * @param int $orderId
      * @param OrdersRepository $ordersRep
      * @param VKAPI $vk
      * @return JsonResponse
      */
-    public function purchaseNotificationSend(int $orderId, OrdersRepository $ordersRep, VKAPI $vk)
+    public function purchaseNotificationSend(int $orderId, OrdersRepository $ordersRep, VKAPI $vk): JsonResponse
     {
         $order = $ordersRep->find($orderId);
 
@@ -693,7 +346,7 @@ class ApiController extends BaseApiController {
      * @Route("/api/history/{userId}/get", name="api_history_get")
      *
      * @param int $userId
-     * @param HistoryRepository $historyRep
+     * @param OrdersRepository $ordersRep
      * @param ValidatorInterface $validator
      * @param SerializerHelper $serializer
      * @return JsonResponse
@@ -702,7 +355,7 @@ class ApiController extends BaseApiController {
      */
     public function getHistory(
         int $userId,
-        HistoryRepository $historyRep,
+        OrdersRepository $ordersRep,
         ValidatorInterface $validator,
         SerializerHelper $serializer
     ): JsonResponse
@@ -725,7 +378,7 @@ class ApiController extends BaseApiController {
         if (count($errors) > 0) throw new HttpException(422, 'Validation error');
         if ($this->user->getUserId() !== $userId) throw new HttpException(403, 'Forbidden');
 
-        $history = $historyRep->get($userId, $params['page'] ?? 1);
+        $history = $ordersRep->get($userId, $params['page'] ?? 1);
 
         /**
          * @param \DateTime $inner
