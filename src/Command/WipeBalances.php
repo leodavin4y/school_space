@@ -6,6 +6,7 @@ use App\Repository\AdminsRepository;
 use App\Repository\UsersRepository;
 use App\Service\Letscover;
 use App\Service\VKAPI;
+use App\Service\CommandLock;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -22,10 +23,13 @@ class WipeBalances extends Command
 
     private $adminsRep;
 
+    private $commandLock;
+
     public function __construct(
         EntityManagerInterface $entityManager,
         UsersRepository $usersRep,
         AdminsRepository $adminsRep,
+        CommandLock $commandLock,
         ?string $name = null
     ) {
         parent::__construct($name);
@@ -33,29 +37,71 @@ class WipeBalances extends Command
         $this->em = $entityManager;
         $this->usersRep = $usersRep;
         $this->adminsRep = $adminsRep;
+        $this->commandLock = $commandLock;
     }
 
     protected function configure(){}
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $letscoverUsers = Letscover::getActivity();
+        try {
+            // Блокируем выполнение других команд
+            $this->commandLock->lock();
 
-        if (count($letscoverUsers) === 0) throw new \Exception('Letscover users count = 0');
+            // Получаем базу letscover (чтобы при синхронизации баз пользователь не получил лишние умникоины)
+            $letscoverUsers = Letscover::getActivity();
 
-        foreach ($letscoverUsers as $user) {
-            Letscover::subBalance($user->userId, $user->points);
-        }
+            if (count($letscoverUsers) > 0) {
+                // Обнулили баллы всех пользователей в базе letscover
+                foreach ($letscoverUsers as $user) {
+                    Letscover::subBalance($user->userId, $user->points);
+                }
+            }
 
-        $this->usersRep->calcTalents();
-        $this->usersRep->wipeBalances();
+            $limit = 100;
 
-        $admins = $this->adminsRep->findAll();
+            while (1) {
+                // Получили пользователей (Получаем с постраничной разбивкой и всегда первую страницу)
+                $users = $this->usersRep->getByLimit(1, $limit);
 
-        foreach ($admins as $admin) {
-            try {
-                VKAPI::sendMsg($admin->getUserId(), '[Обнуление умникоинов завершено]');
-            } catch (\Exception $e) {}
+                if (!$users || count($users) === 0) break;
+
+                $userIds = array_map(function ($u) {return $u->getUserId();}, $users);
+
+                // Конвертировали умникоины в таланты
+                $this->usersRep->coinsToTalents($userIds);
+
+                // Отправили уведомления
+                foreach ($users as $index => $user) {
+                    $talents = round($user->getBalance() / 50, 2);
+
+                    VKAPI::method('messages.send', [
+                        'user_id' => $user->getUserId(),
+                        'random_id' => time() + $index,
+                        'message' => "Умникоины переплавлены в таланты!\nТалантов получено: +{$talents}",
+                        'access_token' => $_ENV['GROUP_TOKEN'],
+                        'v' => 5.124
+                    ]);
+                }
+
+                if (count($users) < $limit) break;
+            }
+
+            // Отправляем уведомления о завершении операции всем админам
+            $admins = $this->adminsRep->findAll();
+
+            foreach ($admins as $admin) {
+                try {
+                    VKAPI::sendMsg($admin->getUserId(), '[Обнуление умникоинов завершено]');
+                } catch (\Exception $e) {}
+            }
+        } catch (\Exception $e) {
+            $output->writeln($e->getMessage());
+
+            return Command::FAILURE;
+        } finally {
+            // Разблокируем выполнение других команд
+            $this->commandLock->unlock();
         }
 
         return Command::SUCCESS;

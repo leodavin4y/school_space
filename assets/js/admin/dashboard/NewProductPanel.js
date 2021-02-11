@@ -191,7 +191,7 @@ class NewProductPanel extends React.Component {
     usePropsedProduct = async () => {
         const {product} = this.props;
 
-        if (!product) return false;
+        if (typeof product !== 'object' || product === null) return false;
 
         let photoBlob, photoURL;
 
@@ -213,7 +213,7 @@ class NewProductPanel extends React.Component {
             preview: photoURL,
             enabled: product.enabled,
             num: product.num
-        });
+        }, () => {console.log(this.state.descr)});
 
         if (product.restrict_freq_time !== null && product.restrict_freq !== null) {
             let time = 0;
@@ -255,17 +255,12 @@ class NewProductPanel extends React.Component {
                         key='name'
                     />
 
-                    {/*<Textarea
-                        top="Описание"
-                        placeholder="Описание товара (до 65 тыс. симв.)"
-                        onChange={this.description}
-                        value={this.state.descr}
-                    />*/}
                     <FormLayoutGroup top="Описание">
                         <Div style={{ paddingTop: 0, paddingBottom: 0 }}>
                             <Editor
                                 apiKey="4agmyus6h1io2b7a9hn40q6pl4bgbnjnnwnr46lvyzzrtg6j"
                                 initialValue={this.state.descr}
+                                value={this.state.descr}
                                 init={{
                                     height: 250,
                                     menubar: false,

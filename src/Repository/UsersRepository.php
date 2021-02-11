@@ -2,10 +2,11 @@
 
 namespace App\Repository;
 
+use App\Entity\Points;
 use App\Entity\Users;
-use App\Entity\TopUsers;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use Doctrine\Common\Collections\Criteria;
 
 /**
  * @method Users|null find($id, $lockMode = null, $lockVersion = null)
@@ -92,12 +93,16 @@ class UsersRepository extends ServiceEntityRepository
         return $stmt->fetchAll();
     }
 
-    public function calcTalents()
+    public function coinsToTalents($userIds = [])
     {
-        $db = $this->getEntityManager()
-            ->getConnection();
-
-        $db->query("UPDATE `users` SET `talent` = ROUND(`balance` / 50, 2) WHERE `balance` > 0");
+        $list = implode(', ', $userIds);
+        $db = $this->getEntityManager()->getConnection();
+        $db->query("
+          UPDATE `users` 
+              SET `talent` = `talent` + ROUND(`balance` / 50, 2), 
+                  `balance` = 0 
+            WHERE `balance` > 0 AND user_id IN ({$list})
+        ");
     }
 
     public function wipeBalances()
@@ -107,5 +112,31 @@ class UsersRepository extends ServiceEntityRepository
             ->set('u.balance', 0)
             ->getQuery()
             ->execute();
+    }
+
+    /**
+     * Получить пользователей с положительным балансом с разбивкой на страницы
+     *
+     * @param int $page
+     * @param int $itemPerPage
+     * @return Users[]
+     */
+    public function getByLimit(int $page = 1, int $itemPerPage = 10)
+    {
+        $offset = $itemPerPage * ($page - 1);
+
+        return $this->createQueryBuilder('u')
+            ->select('u')
+            ->where('u.ban = 0 AND u.balance > 0')
+            ->getQuery()
+            ->setFirstResult($offset) // set the offset
+            ->setMaxResults($itemPerPage) // set the limit
+            ->getSQL();
+            //->getResult();
+    }
+
+    public function getUsersCount()
+    {
+        $this->matching(Criteria::create()->andWhere(Criteria::expr()->eq('ban', false)))->count();
     }
 }

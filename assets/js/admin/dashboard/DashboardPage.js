@@ -310,8 +310,9 @@ class DashboardPage extends React.Component {
                                 }}
                                 onEdit={
                                     (prod) => {
-                                        this.setState({ product: prod });
-                                        this.props.open('view4', 'new_product');
+                                        this.setState({ product: prod }, () => {
+                                            this.props.open('view4', 'new_product');
+                                        });
                                     }
                                 }
                                 onPopout={

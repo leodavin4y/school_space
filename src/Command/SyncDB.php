@@ -2,16 +2,15 @@
 
 namespace App\Command;
 
-use App\Repository\OrdersRepository;
 use App\Repository\UsersRepository;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Entity\Users;
-use App\Entity\Points;
 use App\Service\VKAPI;
 use App\Service\Letscover;
+use App\Service\CommandLock;
 
 class SyncDB extends Command
 {
@@ -21,15 +20,19 @@ class SyncDB extends Command
 
     private $usersRep;
 
+    private $commandLock;
+
     public function __construct(
         EntityManagerInterface $entityManager,
         UsersRepository $usersRep,
+        CommandLock $commandLock,
         ?string $name = null
     ) {
         parent::__construct($name);
 
         $this->em = $entityManager;
         $this->usersRep = $usersRep;
+        $this->commandLock = $commandLock;
     }
 
     protected function configure()
@@ -59,6 +62,8 @@ class SyncDB extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
+        if ($this->commandLock->isLocked()) return Command::FAILURE;
+
         $userActivities = Letscover::getActivity();
         $userActivitiesChunked = array_chunk($userActivities, 500);
         $recordedUsers = 0;
