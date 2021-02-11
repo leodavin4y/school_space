@@ -19,6 +19,7 @@ import PropTypes from 'prop-types';
 import bridge from "@vkontakte/vk-bridge";
 import {getAccessToken, getCurrentUser} from "../utils";
 import {inject, observer} from "mobx-react";
+import classNames from 'classnames';
 
 @inject("mainStore")
 @observer
@@ -253,7 +254,11 @@ class ProfileModal extends React.Component {
                                 value={this.state.city}
                                 onInput={this.inputCity}
                                 onChange={this.inputCity}
-                                status={city === '' && !this.state.validateForm ? 'default' : this.cityValid() ? 'valid' : 'error'}
+                                status={classNames({
+                                    'default': !this.state.validateForm,
+                                    'valid': this.cityValid(),
+                                    'error': city !== '' && !this.cityValid()
+                                })}
                             />
 
                             <Input
@@ -262,10 +267,15 @@ class ProfileModal extends React.Component {
                                 value={this.state.school}
                                 onInput={this.inputSchool}
                                 onChange={this.inputSchool}
-                                status={school === '' && !this.state.validateForm ? 'default' : this.schoolValid() ? 'valid' : 'error'}
+                                status={classNames({
+                                    'default': !this.state.validateForm,
+                                    'valid': this.schoolValid(),
+                                    'error': school !== '' && !this.schoolValid()
+                                })}
                                 maxLength={30}
                             />
-
+                        </FormLayout>
+                        <FormLayout>
                             <Input
                                 top="Классный руководитель"
                                 placeholder="ФИО"
@@ -273,7 +283,11 @@ class ProfileModal extends React.Component {
                                 onInput={this.inputTeacher}
                                 onChange={this.inputTeacher}
                                 spellCheck={false}
-                                status={teacher === '' && !this.state.validateForm ? 'default' : this.teacherValid() ? 'valid' : 'error'}
+                                status={classNames({
+                                    'default': !this.state.validateForm,
+                                    'valid': this.teacherValid(),
+                                    'error': teacher !== '' && !this.teacherValid()
+                                })}
                             />
 
                             <Select
@@ -281,14 +295,16 @@ class ProfileModal extends React.Component {
                                 value={this.state.class}
                                 defaultValue={1}
                                 onChange={this.inputClass}
-                                status={city || school || teacher ? 'valid' : 'default'}
+                                status={classNames({
+                                    'default': !this.state.validateForm,
+                                    'valid': school !== '' && teacher !== '' && city !== '',
+                                })}
                             >
                                 {([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]).map((num) =>
                                     <option value={num} key={num}>{num}</option>
                                 )}
                             </Select>
                         </FormLayout>
-
                     </div>
                 </ModalPage>
             </ModalRoot>

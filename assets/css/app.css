@@ -109,6 +109,9 @@ body[scheme="space_gray"] .PageDialog {
     display: inline-block;
     width: calc(50%);
 }
+.ProfileForm .FormLayout__row:last-of-type {
+    float: right;
+}
 /**/
 .Friends {
 
