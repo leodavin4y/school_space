@@ -3,7 +3,7 @@ import {withRouter} from 'react-router-dom';
 import {
     Panel, Root, View, Tabs, TabsItem,
     Button as VKButton, Div, Title, Text, ScreenSpinner,
-    Counter,
+    Counter, Radio
 } from "@vkontakte/vkui";
 import axios from "axios";
 import ProfileModal from "../getcoins/ProfileModal";
@@ -16,6 +16,11 @@ import ProductPanel from './ProductPanel';
 import SuccessfulPurchasePanel from './SuccessfulPurchasePanel';
 import Popup from '../components/popup/popup';
 import {storageGet, storageSet, storageSupported} from "../utils";
+import onboarding1 from '../../images/onboarding_1.png';
+import onboarding2 from '../../images/onboarding_2.png';
+import onboarding3 from '../../images/onboarding_3.png';
+import onboarding4 from '../../images/onboarding_4.png';
+import PropTypes from 'prop-types';
 
 @inject("mainStore", "shopStore")
 @observer
@@ -39,7 +44,8 @@ class MainPage extends React.Component {
             storeActionsCounter: 0,
             rightsPopup: null,
             rightsAllowed: false,
-            initInProgress: true
+            initInProgress: true,
+            onBoardingStep: 1
         };
     }
 
@@ -197,6 +203,69 @@ class MainPage extends React.Component {
         return (
             <Root activeView={this.props.activeView}>
                 <View id="view1" activePanel={this.props.activePanel} modal={modal} popout={this.state.mainSpinner}>
+                    <Panel id="onboarding">
+                        <div className={'Onboarding'}>
+                            <Div>
+                                {this.state.onBoardingStep === 1 &&
+                                    <>
+                                        <img src={onboarding1}/>
+                                        <Div style={{ paddingLeft:0, paddingRight:0 }}>
+                                            <Title level="1" weight="heavy" style={{ marginBottom: 16 }}>
+                                                Получайте школьные оценки
+                                            </Title>
+                                        </Div>
+                                    </>
+                                }
+
+                                {this.state.onBoardingStep === 2 &&
+                                    <>
+                                        <img src={onboarding2}/>
+                                        <Div style={{ paddingLeft:0, paddingRight:0 }}>
+                                            <Title level="1" weight="heavy" style={{ marginBottom: 16 }}>
+                                                Присылайте фотографии оценок
+                                            </Title>
+                                        </Div>
+                                    </>
+                                }
+
+                                {this.state.onBoardingStep === 3 &&
+                                    <>
+                                        <img src={onboarding3}/>
+                                        <Div style={{ paddingLeft:0, paddingRight:0 }}>
+                                            <Title level="1" weight="heavy" style={{ marginBottom: 16 }}>
+                                                Получайте школьную криптовалюту
+                                            </Title>
+                                        </Div>
+                                    </>
+                                }
+
+                                {this.state.onBoardingStep === 4 &&
+                                    <>
+                                        <img src={onboarding4}/>
+                                        <Div style={{ paddingLeft:0, paddingRight:0 }}>
+                                            <Title level="1" weight="heavy">
+                                                Обменивайте умникоины на товары в магазине
+                                            </Title>
+                                        </Div>
+                                    </>
+                                }
+                            </Div>
+
+                            <Div className="RadioLine">
+                                <Radio name="radio" value={1} onChange={() => {this.setState({ onBoardingStep: 1 })}} defaultChecked={this.state.onBoardingStep === 1} />
+                                <Radio name="radio" value={2} onChange={() => {this.setState({ onBoardingStep: 2 })}} defaultChecked={this.state.onBoardingStep === 2} />
+                                <Radio name="radio" value={3} onChange={() => {this.setState({ onBoardingStep: 3 })}} defaultChecked={this.state.onBoardingStep === 3} />
+                                <Radio name="radio" value={4} onChange={() => {this.setState({ onBoardingStep: 4 })}} defaultChecked={this.state.onBoardingStep === 4} />
+                            </Div>
+
+                            <Div>
+                                <VKButton mode="secondary" size="xl" onClick={() => {this.props.activatePanel('main')}}>
+                                    ОТКРЫТЬ СЧЁТ УМНИКОИНОВ
+                                </VKButton>
+                            </Div>
+                        </div>
+                    </Panel>
+
                     <Panel id="main">
                         <Header isAdmin={user && user.is_admin} onClick={this.profileModal} />
 
@@ -298,5 +367,9 @@ class MainPage extends React.Component {
         );
     }
 }
+
+MainPage.propTypes = {
+    activatePanel: PropTypes.func
+};
 
 export default withRouter(MainPage);

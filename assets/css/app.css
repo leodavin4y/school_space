@@ -215,3 +215,23 @@ body[scheme="space_gray"] .PromoCard {
     background: var(--modal_card_background);
     box-shadow: none;
 }
+
+.Onboarding img {
+    display: block;
+    height: auto;
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+}
+.Onboarding .Title {
+    text-align: center;
+}
+.RadioLine {
+    text-align: center;
+}
+.RadioLine label {
+    display: inline-block;
+}
+.RadioLine .Radio__icon {
+    margin: 0 !important;
+}

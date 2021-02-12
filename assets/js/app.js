@@ -23,6 +23,7 @@ import {inject, observer, Provider} from "mobx-react";
 import {configure} from "mobx";
 import mainStore from "./stores/mainStore";
 import shopStore from './stores/shopStore';
+import {storageGet, storageSet} from "./utils";
 
 // для IE11
 require("es6-object-assign").polyfill();
@@ -186,6 +187,10 @@ class App extends React.Component {
         });
     };
 
+    activePanel = (name) => {
+        this.setState({ activePanel: name });
+    };
+
     colorScheme(scheme, needChange = false) {
         if (scheme === undefined) {
             scheme = this.state.lights[0];
@@ -302,6 +307,15 @@ class App extends React.Component {
     };
 
     componentDidMount() {
+        storageGet('onboarding')
+            .catch()
+            .then(data => {
+                if (data.onboarding !== '1') {
+                    this.setState({ activePanel: 'onboarding' });
+                    storageSet('onboarding', '1');
+                }
+            });
+
         console.log('App mounted');
 
         // if (this.vk_params_count <= 1) return this.redirect('/404');
@@ -353,6 +367,7 @@ class App extends React.Component {
                                         activePanel={this.state.activePanel}
                                         mobile={this.mobile}
                                         open={this.goToPage}
+                                        activatePanel={this.activePanel}
                                         this={this}
                                     />
                                 </Route>
