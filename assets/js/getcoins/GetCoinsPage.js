@@ -68,7 +68,7 @@ class GetCoinsPage extends React.Component {
 
         this.userProfileIsExist = false;
         this.inputFile = React.createRef();
-        this.calendarWidth = this.props.this.mobile ? (document.documentElement.clientWidth - 30) : 400;
+        this.calendarWidth = this.props.this.mobile ? (document.documentElement.clientWidth - 30) : 500;
     }
 
     userDeclineHandler = (e) => {
@@ -676,7 +676,7 @@ class GetCoinsPage extends React.Component {
                             onClose={this.tooltipCalendarClose}
                             isShown={this.state.tooltip}
                         >
-                            <Div style={{ width: this.calendarWidth, paddingBottom: 0 }}>
+                            <Div style={{ width: this.calendarWidth, paddingBottom: 0, margin: '0 auto' }}>
                                 <Calendar
                                     onChange={this.selectDate}
                                     onMonthChange={this.setMonthTotal}
