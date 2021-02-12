@@ -10,15 +10,16 @@ import {
     PanelHeader,
     PanelHeaderButton,
     PanelHeaderBack, Root,
-    Group, HorizontalScroll, Header, Avatar
+    Group, HorizontalScroll, Header, Avatar, Text, Button as VKButton
 } from '@vkontakte/vkui';
 import {PromoCard} from "@happysanta/vk-app-ui";
 import {inject, observer} from "mobx-react";
 import axios from 'axios';
 import MostActive from './MostActive';
-import {Api, declOfNum, getAccessToken} from "../utils";
+import {Api, declOfNum, getAccessToken, storageSupported} from "../utils";
 import Link from "@vkontakte/vkui/dist/components/Link/Link";
-import ScrollContainer from 'react-indiana-drag-scroll'
+import ScrollContainer from 'react-indiana-drag-scroll';
+import Popup from '../components/popup/popup';
 
 @inject("mainStore")
 @observer
@@ -34,6 +35,7 @@ class StatsPage extends React.Component {
             friends: [],
             page: 1,
             topUsers: [],
+            popup: null
         };
     }
 
@@ -72,7 +74,43 @@ class StatsPage extends React.Component {
         })
     };
 
+    accessPermissionPopup = () => {
+        return new Promise((resolve, reject) => {
+            const close = () => { this.setState({ popup: null }) };
+            const onClose = () => { close(); reject(false) };
+            const allow = () => {
+                close();
+                if (storageSupported()) window.localStorage.setItem('Friends_granted', '1');
+                resolve(true);
+            };
+
+            const friendsGranted = storageSupported() ? window.localStorage.getItem('Friends_granted') : null;
+
+            if (friendsGranted === '1') return resolve(true);
+
+            this.setState({
+                popup:
+                    <Popup onClose={onClose}>
+                        <Title level="2" weight="semibold" style={{ marginBottom: 5, textTransform: 'uppercase' }}>
+                            Запрос доступа
+                        </Title>
+
+                        <Text weight="regular" style={{ paddingTop: 16, paddingBottom: 16 }}>
+                            Если вы желаете, чтобы данные о статистике ваших друзей отображались в приложении,
+                            подтвердите доступ к данным вашей страницы.
+                        </Text>
+
+                        <VKButton onClick={allow}>OK</VKButton>
+                    </Popup>
+            })
+        })
+    };
+
     fetchFriendsStats = async () => {
+        const accessPermission = await this.accessPermissionPopup().catch(() => { return false });
+
+        if (!accessPermission) return false;
+
         const token = await getAccessToken('friends');
         const friends = await Api('friends.getAppUsers', {
             access_token: token,
@@ -185,6 +223,8 @@ class StatsPage extends React.Component {
 
                             <MostActive/>
                         </Div>
+
+                        {this.state.popup}
                     </Panel>
                 </View>
             </Root>

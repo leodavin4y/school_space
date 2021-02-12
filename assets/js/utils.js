@@ -80,3 +80,12 @@ export function emit(name, data = {}, targetEl = window)
         'detail': data
     }));
 }
+
+export function storageSupported()
+{
+    try {
+        return typeof(Storage) !== "undefined";
+    } catch (e) {
+        return false;
+    }
+}
