@@ -4,6 +4,7 @@
 body {
     background-color: var(--background_content);
     color: var(--text_primary);
+    -webkit-overflow-scrolling: auto;
 }
 body[scheme="space_gray"] {
     --background_page: #0a0a0a;
