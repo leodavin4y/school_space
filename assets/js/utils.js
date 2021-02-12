@@ -84,8 +84,38 @@ export function emit(name, data = {}, targetEl = window)
 export function storageSupported()
 {
     try {
-        return typeof(Storage) !== "undefined";
+        return bridge.supports('VKWebAppStorageGet');
     } catch (e) {
         return false;
     }
+}
+
+export async function storageGet(...keys)
+{
+    return await bridge.send('VKWebAppStorageGet', {"keys": keys})
+        .then(data => {
+            const result = data.keys;
+            const map = [];
+
+            result.forEach(item => {
+                const mapElem = {};
+                mapElem[item.key] = item.value;
+
+                map.push(mapElem);
+            });
+
+            return keys.length === 1 ? map[0] : map;
+        }).catch(e => {
+            return null;
+        });
+}
+
+export async function storageSet(key, value)
+{
+    return await bridge.send('VKWebAppStorageSet', {"key": key, "value": value})
+        .then(r => {
+            return true;
+        }).catch(e => {
+            return false;
+        });
 }

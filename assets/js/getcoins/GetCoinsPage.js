@@ -17,7 +17,7 @@ import bridge from '@vkontakte/vk-bridge';
 import moment from 'moment';
 import 'moment-timezone';
 import PopupCanceled from './PopupCanceled';
-import {declOfNum, monthRus, randomStr} from "../utils";
+import {declOfNum, monthRus, randomStr, storageSet, storageGet, storageSupported} from "../utils";
 import classNames from "classnames";
 import ProfileModal from './ProfileModal';
 import {inject, observer} from "mobx-react";
@@ -149,7 +149,7 @@ class GetCoinsPage extends React.Component {
     }
 
     rights = () => {
-        return new Promise((resolve, reject) => {
+        return new Promise(async (resolve, reject) => {
             const close = () => {
                 this.setState({ rightsPopup: null });
             };
@@ -159,12 +159,13 @@ class GetCoinsPage extends React.Component {
             };
             const allow = () => {
                 close();
+                storageSet('profile_granted', '1');
                 resolve(true);
             };
 
-            const profileGranted = window.localStorage ? window.localStorage.getItem('Profile_granted') : null;
+            const storage = storageSupported() ? (await storageGet('profile_granted')) : null;
 
-            if (profileGranted === '1') return resolve(true);
+            if (storage && storage.profile_granted === '1') return resolve(true);
 
             this.setState({
                 rightsPopup:

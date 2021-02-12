@@ -86,9 +86,6 @@ class ProfileModal extends React.Component {
                             city = data.city.title ?? city;
                         });
                 }
-
-                console.log('Cookie set');
-                if (window.localStorage) window.localStorage.setItem('Profile_granted', '1');
             }
 
             this.setState({

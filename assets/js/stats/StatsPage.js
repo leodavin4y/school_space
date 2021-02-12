@@ -16,7 +16,7 @@ import {PromoCard} from "@happysanta/vk-app-ui";
 import {inject, observer} from "mobx-react";
 import axios from 'axios';
 import MostActive from './MostActive';
-import {Api, declOfNum, getAccessToken, storageSupported} from "../utils";
+import {Api, declOfNum, getAccessToken, storageSupported, storageSet, storageGet} from "../utils";
 import Link from "@vkontakte/vkui/dist/components/Link/Link";
 import ScrollContainer from 'react-indiana-drag-scroll';
 import Popup from '../components/popup/popup';
@@ -75,18 +75,18 @@ class StatsPage extends React.Component {
     };
 
     accessPermissionPopup = () => {
-        return new Promise((resolve, reject) => {
+        return new Promise(async (resolve, reject) => {
             const close = () => { this.setState({ popup: null }) };
             const onClose = () => { close(); reject(false) };
             const allow = () => {
                 close();
-                if (storageSupported()) window.localStorage.setItem('Friends_granted', '1');
+                storageSet('friends_granted', '1');
                 resolve(true);
             };
 
-            const friendsGranted = storageSupported() ? window.localStorage.getItem('Friends_granted') : null;
+            const storage = storageSupported() ? (await storageGet('friends_granted')) : null;
 
-            if (friendsGranted === '1') return resolve(true);
+            if (storage && storage.friends_granted === '1') return resolve(true);
 
             this.setState({
                 popup:

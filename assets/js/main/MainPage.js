@@ -15,6 +15,7 @@ import ShopSection from './ShopSection';
 import ProductPanel from './ProductPanel';
 import SuccessfulPurchasePanel from './SuccessfulPurchasePanel';
 import Popup from '../components/popup/popup';
+import {storageGet, storageSet, storageSupported} from "../utils";
 
 @inject("mainStore", "shopStore")
 @observer
@@ -101,7 +102,7 @@ class MainPage extends React.Component {
     }
 
     rights = () => {
-        return new Promise((resolve, reject) => {
+        return new Promise(async (resolve, reject) => {
             const close = () => {
                 this.setState({ rightsPopup: null });
             };
@@ -111,12 +112,13 @@ class MainPage extends React.Component {
             };
             const allow = () => {
                 close();
+                storageSet('profile_granted', '1');
                 resolve(true);
             };
 
-            const profileGranted = window.localStorage ? window.localStorage.getItem('Profile_granted') : null;
+            const storage = storageSupported() ? (await storageGet('profile_granted'))  : null;
 
-            if (profileGranted === '1') return resolve(true);
+            if (storage  && storage.profile_granted === '1') return resolve(true);
 
             this.setState({
                 rightsPopup:
