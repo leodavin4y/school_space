@@ -676,7 +676,7 @@ class GetCoinsPage extends React.Component {
                             onClose={this.tooltipCalendarClose}
                             isShown={this.state.tooltip}
                         >
-                            <Div style={{ width: this.calendarWidth, paddingBottom: 0, margin: '0 auto' }}>
+                            <Div style={{ width: this.calendarWidth, margin: '0 auto' }}>
                                 <Calendar
                                     onChange={this.selectDate}
                                     onMonthChange={this.setMonthTotal}
