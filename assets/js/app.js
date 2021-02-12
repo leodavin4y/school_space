@@ -27,19 +27,6 @@ import shopStore from './stores/shopStore';
 // для IE11
 require("es6-object-assign").polyfill();
 
-function preventDefault(e) {
-    e.preventDefault();
-}
-
-function disableScroll() {
-    document.body.addEventListener('touchmove', preventDefault, { passive: false });
-}
-function enableScroll() {
-    document.body.removeEventListener('touchmove', preventDefault);
-}
-
-disableScroll();
-
 const GetCoinsPage = React.lazy(() => import('../js/getcoins/GetCoinsPage'));
 const StatsPage = React.lazy(() => import('../js/stats/StatsPage'));
 const DashboardPage = React.lazy(() => import('../js/admin/dashboard/DashboardPage'));
