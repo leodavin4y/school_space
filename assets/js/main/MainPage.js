@@ -210,7 +210,7 @@ class MainPage extends React.Component {
                                     <>
                                         <img src={onboarding1}/>
                                         <Div style={{ paddingLeft:0, paddingRight:0 }}>
-                                            <Title level="1" weight="heavy" style={{ marginBottom: 16 }}>
+                                            <Title level="1" weight="heavy">
                                                 Получайте школьные оценки
                                             </Title>
                                         </Div>
@@ -221,7 +221,7 @@ class MainPage extends React.Component {
                                     <>
                                         <img src={onboarding2}/>
                                         <Div style={{ paddingLeft:0, paddingRight:0 }}>
-                                            <Title level="1" weight="heavy" style={{ marginBottom: 16 }}>
+                                            <Title level="1" weight="heavy">
                                                 Присылайте фотографии оценок
                                             </Title>
                                         </Div>
@@ -232,7 +232,7 @@ class MainPage extends React.Component {
                                     <>
                                         <img src={onboarding3}/>
                                         <Div style={{ paddingLeft:0, paddingRight:0 }}>
-                                            <Title level="1" weight="heavy" style={{ marginBottom: 16 }}>
+                                            <Title level="1" weight="heavy">
                                                 Получайте школьную криптовалюту
                                             </Title>
                                         </Div>
