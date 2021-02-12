@@ -22,6 +22,7 @@ import classNames from "classnames";
 import ProfileModal from './ProfileModal';
 import {inject, observer} from "mobx-react";
 import Popup from '../components/popup/popup';
+import {PromoCard} from "@happysanta/vk-app-ui";
 
 moment.tz.setDefault("Europe/Moscow");
 
@@ -695,6 +696,16 @@ class GetCoinsPage extends React.Component {
                                         В <Span text={monthRus(bestMonth.month_num - 1, 2)}/> вы собрали <Span text={bestMonth.amount}/> {coins(bestMonth.amount)}
                                     </Text>
                                 </div>
+                            </Div>
+                        }
+
+                        {!bestDay &&
+                            <Div>
+                                <PromoCard className="PromoCard">
+                                    <div style={{ textTransform: 'uppercase', color: 'var(--text_secondary)', textAlign: 'center' }}>
+                                        Вы ещё не обменивали оценки
+                                    </div>
+                                </PromoCard>
                             </Div>
                         }
 
