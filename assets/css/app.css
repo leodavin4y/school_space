@@ -147,6 +147,10 @@ body[scheme="space_gray"] .PageDialog {
     overflow: hidden;*/
     width: 50%;
 }
+.Product__wrap .Div {
+    padding-top: 5px !important;
+    padding-bottom: 5px !important;
+}
 .Product {
     /*width: 100%;*/
     min-height: 250px;
