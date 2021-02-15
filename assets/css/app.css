@@ -130,14 +130,14 @@ body[scheme="space_gray"] .PageDialog {
 
 /**/
 .Store {
-    width: 580px;
-    margin: 15px auto 0 auto;
+    /*width: 580px;
+    margin: 15px auto 0 auto;*/
+    margin-top: 5px;
 }
 .Store .row {
     width: 100%;
     display: flex;
     flex-wrap: wrap;
-    margin-top: 5px;
 }
 .Product__wrap {
     /*width: calc(50% - 30px);
