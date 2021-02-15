@@ -134,14 +134,21 @@ body[scheme="space_gray"] .PageDialog {
     width: 580px;
     margin: 15px auto 0 auto;
 }
+.Store .row {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    margin-top: 5px;
+}
 .Product__wrap {
-    width: calc(50% - 30px);
+    /*width: calc(50% - 30px);
     padding: 0 15px 15px 15px;
     float: left;
-    overflow: hidden;
+    overflow: hidden;*/
+    width: 50%;
 }
 .Product {
-    width: 100%;
+    /*width: 100%;*/
     min-height: 250px;
     text-align: center;
     cursor: pointer;
@@ -157,17 +164,21 @@ body[scheme="space_gray"] .PageDialog {
 }
 .Product__name {
     margin: 5px 0;
-    height: 35px;
-    line-height: 1em;
+    /*height: 35px;*/
+    line-height: 1.1em;
 }
 .Store.mobile {
     width: 100%;
 }
 .Store.mobile .Product__wrap {
-    width: 250px;
+    /*width: 250px;
     margin: 0 auto;
     float: none;
-    clear: both;
+    clear: both;*/
+}
+.Store.mobile .Product__photo {
+    width: 100%;
+    height: calc(50vw - 40px);
 }
 
 /**/
