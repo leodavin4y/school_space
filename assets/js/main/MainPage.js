@@ -230,6 +230,8 @@ class MainPage extends React.Component {
             >
                 {this.props.shopStore.counter}
             </Counter> : null;
+        const infoGroup = this.state.infoGroup;
+        const infoGroupMembers = infoGroup && infoGroup.members_count ? infoGroup.members_count : 15672;
 
         return (
             <Root activeView={this.props.activeView}>
@@ -378,14 +380,7 @@ class MainPage extends React.Component {
                                             />
                                         }
                                     >
-                                        { this.state.infoGroup ?
-                                            Number(this.state.infoGroup.members_count).toLocaleString('ru-RU') :
-                                            0
-                                        } {
-                                            declOfNum(this.state.infoGroup ? this.state.infoGroup.members_count : 0,
-                                                ['подписчик', 'подписчика', 'подписчиков']
-                                            )
-                                        }
+                                        { Number(infoGroupMembers).toLocaleString('ru-RU') } { declOfNum(infoGroupMembers, ['подписчик', 'подписчика', 'подписчиков']) }
                                     </MiniInfoCell>
 
                                     <MiniInfoCell
