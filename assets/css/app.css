@@ -4,6 +4,7 @@
 body {
     background-color: var(--background_content);
     color: var(--text_primary);
+    -webkit-overflow-scrolling: auto;
 }
 body[scheme="space_gray"] {
     --background_page: #0a0a0a;
@@ -132,13 +133,13 @@ body[scheme="space_gray"] .PageDialog {
 .Store {
     /*width: 580px;
     margin: 15px auto 0 auto;*/
-    margin-top: 10px;
+    margin-top: 20px;
 }
 .Store .row {
     width: 100%;
     display: flex;
     flex-wrap: wrap;
-    margin-bottom: 15px;
+    margin-bottom: 30px;
 }
 .Product__wrap {
     /*width: calc(50% - 30px);
@@ -173,6 +174,7 @@ body[scheme="space_gray"] .PageDialog {
 }
 .Store.mobile {
     width: 100%;
+    margin-top: 10px !important;
 }
 .Store.mobile .Product__wrap {
     /*width: 250px;
@@ -183,6 +185,9 @@ body[scheme="space_gray"] .PageDialog {
 .Store.mobile .Product__photo {
     width: 100%;
     height: calc(50vw - 40px);
+}
+.Store.mobile .row {
+    margin-bottom: 15px;
 }
 
 /**/
@@ -230,4 +235,24 @@ body[scheme="space_gray"] .PageDialog {
 body[scheme="space_gray"] .PromoCard {
     background: var(--modal_card_background);
     box-shadow: none;
+}
+
+.Onboarding img {
+    display: block;
+    height: auto;
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+}
+.Onboarding .Title {
+    text-align: center;
+}
+.RadioLine {
+    text-align: center;
+}
+.RadioLine label {
+    display: inline-block;
+}
+.RadioLine .Radio__icon {
+    margin: 0 !important;
 }
