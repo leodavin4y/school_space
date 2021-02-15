@@ -1,6 +1,6 @@
 import React from "react";
 import {Link} from "react-router-dom";
-import {Avatar, Group, RichCell, Tooltip} from "@vkontakte/vkui";
+import {Avatar, Group, RichCell, Tooltip, PanelHeaderContent, PanelHeader} from "@vkontakte/vkui";
 import {Icon28EditOutline} from '@vkontakte/icons';
 import {inject, observer} from "mobx-react";
 import talentLogo from '../../images/t.png';
@@ -26,18 +26,20 @@ class Header extends React.Component {
     render() {
         const {user, userProfile} = this.props.mainStore;
         const style = {
-            display: 'inline-block',
+            display: 'block',
             position: 'relative',
-            top: 3,
+            top: 0,
+            left: 4,
+            float: 'right',
             color: 'var(--accent)',
             cursor: 'pointer'
         };
 
         const school = (
             user && user.info && user.info.city && user.info.school && user.info.class && user.info.teacher ?
-                <>Школа {user.info.school} {<Icon28EditOutline width={18} height={18} onClick={this.props.onClick} style={style}/>}</> :
+                <>Школа {user.info.school} {<Icon28EditOutline width={19} height={14} onClick={this.props.onClick} style={style}/>}</> :
                 <span className="Link" style={{ cursor: 'pointer' }} onClick={this.props.onClick}>
-                    Заполнить анкету ученика {<Icon28EditOutline width={18} height={18} style={style}/>}
+                    Заполнить анкету ученика {<Icon28EditOutline width={19} height={14} style={style}/>}
                 </span>
         );
 
@@ -56,12 +58,12 @@ class Header extends React.Component {
         );
 
         return (
-            <Group>
+            <PanelHeader separator={false}>
                 {userProfile &&
-                    <RichCell
+                    <PanelHeaderContent
                         disabled
-                        before={<Avatar size={48} src={userProfile.photo_100 ? userProfile.photo_100 : 'https://vk.com/images/camera_50.png?ava=1'}/>}
-                        caption={school}
+                        before={<Avatar size={36} src={userProfile.photo_100 ? userProfile.photo_100 : 'https://vk.com/images/camera_50.png?ava=1'}/>}
+                        status={school}
                     >
                         {userProfile.first_name} {userProfile.last_name} {talents}
                         {this.props.isAdmin &&
@@ -69,10 +71,9 @@ class Header extends React.Component {
                                 Admin
                             </Link>
                         }
-                    </RichCell>
+                    </PanelHeaderContent>
                 }
-
-            </Group>
+            </PanelHeader>
         );
     }
 }

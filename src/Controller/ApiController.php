@@ -394,4 +394,21 @@ class ApiController extends BaseApiController {
 
         return $this->createResponse($history);
     }
+
+    /**
+     * Возвращает пользователей о которых упоминается на вкладке "Инфо"
+     *
+     * @Route("/api/users-tab", methods={"POST"}, name="api_users_tab")
+     *
+     * @param VKAPI $vk
+     * @return JsonResponse
+     * @throws \Exception
+     */
+    public function usersForInfoTab(VKAPI $vk): JsonResponse
+    {
+        $uids = [241894642, 322462331, 535108504];
+        $profiles = $vk->usersGet($uids);
+
+        return $this->createResponse($profiles);
+    }
 }
