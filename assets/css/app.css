@@ -154,7 +154,7 @@ body[scheme="space_gray"] .PageDialog {
 }
 .Product {
     /*width: 100%;*/
-    min-height: 250px;
+    /*min-height: 250px;*/
     text-align: center;
     cursor: pointer;
 }
