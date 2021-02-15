@@ -138,6 +138,7 @@ body[scheme="space_gray"] .PageDialog {
     width: 100%;
     display: flex;
     flex-wrap: wrap;
+    margin-bottom: 5px;
 }
 .Product__wrap {
     /*width: calc(50% - 30px);
@@ -147,8 +148,8 @@ body[scheme="space_gray"] .PageDialog {
     width: 50%;
 }
 .Product__wrap .Div {
-    padding-top: 5px !important;
-    padding-bottom: 5px !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
 }
 .Product {
     /*width: 100%;*/
