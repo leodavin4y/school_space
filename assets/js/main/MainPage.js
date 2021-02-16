@@ -3,13 +3,8 @@ import {withRouter} from 'react-router-dom';
 import {
     Panel, Root, View, Tabs, TabsItem,
     Button as VKButton, Div, Title, Text, ScreenSpinner,
-    Counter, Radio, MiniInfoCell, Link, Group, SimpleCell,
-    Avatar, UsersStack, PanelHeader
+    Counter, Radio, Group,
 } from "@vkontakte/vkui";
-import {
-    Icon20ArticleOutline, Icon20UserOutline, Icon20WorkOutline,
-    Icon20FollowersOutline
-} from "@vkontakte/icons";
 import axios from "axios";
 import ProfileModal from "../getcoins/ProfileModal";
 import {inject, observer} from "mobx-react";
@@ -20,13 +15,13 @@ import ShopSection from './ShopSection';
 import ProductPanel from './ProductPanel';
 import SuccessfulPurchasePanel from './SuccessfulPurchasePanel';
 import Popup from '../components/popup/popup';
-import {storageGet, storageSet, storageSupported, declOfNum} from "../utils";
+import {storageGet, storageSet, storageSupported} from "../utils";
 import onboarding1 from '../../images/onboarding_1.png';
 import onboarding2 from '../../images/onboarding_2.png';
 import onboarding3 from '../../images/onboarding_3.png';
 import onboarding4 from '../../images/onboarding_4.png';
 import PropTypes from 'prop-types';
-import bridge from '@vkontakte/vk-bridge';
+import InfoSection from "./InfoSection";
 
 @inject("mainStore", "shopStore")
 @observer
@@ -52,8 +47,6 @@ class MainPage extends React.Component {
             rightsAllowed: false,
             initInProgress: true,
             onBoardingStep: 1,
-            infoUserProfiles: [], // Конвертаторы оценок на вкладке "Инфо"
-            infoGroup: null // Информация о сообществе для вкладки "Инфо"
         };
     }
 
@@ -65,29 +58,6 @@ class MainPage extends React.Component {
         if (name === 'history') {
             this.fetchHistory();
         }
-
-        if (name === 'info') {
-            this.fetchInfoUsers();
-        }
-    };
-
-    fetchInfoUsers = () => {
-        bridge.send("VKWebAppGetGroupInfo", {"group_id": 134978221})
-            .then(data => {
-                this.setState({ infoGroup: data })
-            });
-
-        axios({
-            method: 'POST',
-            url: `${prefix}/api/users-tab`,
-            data: {
-                auth: this.props.this.auth
-            }
-        }).then(r => {
-            this.setState({
-                infoUserProfiles: r.data.data
-            })
-        })
     };
 
     fetchInitData = async () => {
@@ -230,8 +200,6 @@ class MainPage extends React.Component {
             >
                 {this.props.shopStore.counter}
             </Counter> : null;
-        const infoGroup = this.state.infoGroup;
-        const infoGroupMembers = infoGroup && infoGroup.members_count ? infoGroup.members_count : 15672;
 
         return (
             <Root activeView={this.props.activeView}>
@@ -352,61 +320,7 @@ class MainPage extends React.Component {
                             }
 
                             {this.state.activeTab === 'info' &&
-                                <Div>
-                                    <MiniInfoCell
-                                        before={<Icon20ArticleOutline />}
-                                        textWrap="full"
-                                    >
-                                        Вы учитесь в школе? Тогда у вас есть возможность получить призы за учебные успехи.
-                                        <br/><br/>
-
-                                        Умникоины - это система мотивации школьников к образовательной деятельности.
-                                        Приложение позволяет ученику превратить свои школьные оценки в мотивационные баллы,
-                                        чтобы их обменять на товары в благотворительном магазине.
-                                        <br/><br/>
-
-                                        Превратите ваши школьные оценки в умникоины.
-                                        Оценка 5 = 5 умникоинам. Остальные оценки приравниваются к 1 баллу.
-                                    </MiniInfoCell>
-
-                                    <MiniInfoCell
-                                        before={<Icon20WorkOutline />}
-                                        after={<Avatar size={24} src={this.state.infoGroup ? this.state.infoGroup.photo_50 : 'https://vk.com/images/community_50.png'} />}
-                                    >
-                                        <Link href="https://vk.com/schoolspaceru" target="_blank">{this.state.infoGroup && this.state.infoGroup.name ? this.state.infoGroup.name : '...'}</Link>
-                                    </MiniInfoCell>
-
-                                    <MiniInfoCell
-                                        before={<Icon20FollowersOutline />}
-                                        after={
-                                            <UsersStack
-                                                photos={this.state.infoUserProfiles.map(u => u.photo_100)}
-                                            />
-                                        }
-                                    >
-                                        { Number(infoGroupMembers).toLocaleString('ru-RU') } { declOfNum(infoGroupMembers, ['подписчик', 'подписчика', 'подписчиков']) }
-                                    </MiniInfoCell>
-
-                                    <MiniInfoCell
-                                        before={<Icon20UserOutline/>}
-                                    >
-                                        Конвертаторы оценок
-                                    </MiniInfoCell>
-
-                                    <Group separator={true}>
-                                        {this.state.infoUserProfiles.map(user =>
-                                            <SimpleCell
-                                                before={<Avatar src={user.photo_100}/>}
-                                                description="Модератор оценок"
-                                                key={user.id}
-                                            >
-                                                <Link href={`https://vk.com/id${user.id}`} target="_blank">
-                                                    {user.first_name} {user.last_name}
-                                                </Link>
-                                            </SimpleCell>
-                                        )}
-                                    </Group>
-                                </Div>
+                                <InfoSection auth={this.props.mainStore.auth}/>
                             }
                         </Group>
 

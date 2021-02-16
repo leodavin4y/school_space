@@ -401,14 +401,31 @@ class ApiController extends BaseApiController {
      * @Route("/api/users-tab", methods={"POST"}, name="api_users_tab")
      *
      * @param VKAPI $vk
+     * @param AdminsRepository $adminsRepository
      * @return JsonResponse
      * @throws \Exception
      */
-    public function usersForInfoTab(VKAPI $vk): JsonResponse
+    public function usersForInfoTab(VKAPI $vk, AdminsRepository $adminsRepository): JsonResponse
     {
-        $uids = [241894642, 322462331, 535108504];
-        $profiles = $vk->usersGet($uids);
+        // Пользователи, отображаемые в подписчиках на вкладке инфо
+        $subcriberIds = [35645976, 35226283, 140086594];
+        $moderatorIds = array_map(
+            function($moderator) {return $moderator->getUserId();},
+            $adminsRepository->findAll()
+        );
+        $profiles = $vk->usersGet(array_merge($moderatorIds, $subcriberIds));
+        $subcribers = $moderators = [];
 
-        return $this->createResponse($profiles);
+        foreach ($profiles as $profile) {
+            $uid = $profile->id;
+
+            if (in_array($uid, $subcriberIds)) $subcribers[] = $profile;
+            if (in_array($uid, $moderatorIds)) $moderators[] = $profile;
+        }
+
+        return $this->createResponse([
+            'subscribers' => $subcribers,
+            'moderators' => $moderators
+        ]);
     }
 }
