@@ -3,7 +3,7 @@ import {Link} from "react-router-dom";
 import {Avatar, Group, RichCell, Tooltip, PanelHeaderContent, PanelHeader} from "@vkontakte/vkui";
 import {Icon28EditOutline} from '@vkontakte/icons';
 import {inject, observer} from "mobx-react";
-import talentLogo from '../../images/t.png';
+import talentLogo from '../../images/talent.png';
 
 @inject("mainStore")
 @observer
@@ -50,8 +50,8 @@ class Header extends React.Component {
                 isShown={this.state.tooltipSeen}
                 onClose={this.talentTooltipHide}
             >
-                <span onClick={() => this.talentTooltipFlash()} style={{ fontSize: '10px', padding: '2px 3px', border: '1px solid #ccc', borderRadius: 4, color: 'var(--text_secondary)' }}>
-                    <img src={talentLogo} style={{ position: 'relative', top: 1, paddingRight: 3 }}/>
+                <span className="Talent" onClick={() => this.talentTooltipFlash()} style={{ fontSize: 12 }}>
+                    <img src={talentLogo} style={{ width: 16, height: 16, position: 'relative', top: 3, marginRight: 3 }}/>
                     {(user && user.info ? user.info.talent : 0).toFixed(2)}
                 </span>
             </Tooltip>
