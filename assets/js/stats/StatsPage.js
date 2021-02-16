@@ -140,10 +140,9 @@ class StatsPage extends React.Component {
 
     render() {
         const {isMobile} = this.props.mainStore;
-        const {points_total, users_total, friends} = this.state;
+        const {points_total, friends} = this.state;
         const back = () => {window.history.back()};
-        const coinsStr = declOfNum(points_total, ['умникоин', 'умникоина', 'умникоинов']);
-        const usersStr = declOfNum(users_total, ['пользователь', 'пользователя', 'пользователей']);
+        const percent = parseInt((points_total / 35000) * 100);
 
         return (
             <Root activeView={this.props.activeView}>
@@ -163,11 +162,11 @@ class StatsPage extends React.Component {
                         </Div>
 
                         <Div>
-                            <InfoRow header={`${points_total} ${coinsStr} конвертировал(и) ${users_total} ${usersStr}`}>
-                                <Progress value={parseInt((points_total / 10000) * 100)} />
+                            <InfoRow header={`Всего конвертировано умникоинов: ${points_total}`}>
+                                <Progress value={percent} />
                             </InfoRow>
                             <div className="Subhead" style={{ padding: '5px 0', color: 'var(--text_secondary)' }}>
-                                {parseInt((points_total / 10000) * 100)}%
+                                {percent}%
                             </div>
                         </Div>
 
