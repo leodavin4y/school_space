@@ -48,8 +48,8 @@ class Header extends React.Component {
                 isShown={this.state.tooltipSeen}
                 onClose={this.talentTooltipHide}
             >
-                <span onClick={() => this.talentTooltipFlash()} style={{ fontSize: 12, color: 'var(--text_primary)' }}>
-                    <img src={talentLogo} style={{ width: 16, height: 16, position: 'relative', top: 3, marginRight: 3, background: '#fff', borderRadius: '100%' }}/>
+                <span className="Talent" onClick={() => this.talentTooltipFlash()} style={{ fontSize: 12 }}>
+                    <img src={talentLogo} style={{ width: 16, height: 16, position: 'relative', top: 3, marginRight: 3 }}/>
                     {(user && user.info ? user.info.talent : 0).toFixed(2)}
                 </span>
             </Tooltip>
