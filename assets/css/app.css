@@ -12,9 +12,6 @@ body[scheme="space_gray"] {
     background-color: var(--background_content);
     color: var(--text_primary);
 }
-body[scheme="space_gray"] .Talent {
-    filter: invert(1);
-}
 .custom-header .Header__content {
     font-weight: normal;
     text-transform: none;
@@ -258,4 +255,8 @@ body[scheme="space_gray"] .PromoCard {
 }
 .RadioLine .Radio__icon {
     margin: 0 !important;
+}
+/**/
+body[scheme="space_gray"] .Talent img {
+    filter: invert(1);
 }

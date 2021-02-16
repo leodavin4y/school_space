@@ -52,7 +52,9 @@ class Header extends React.Component {
             >
                 <span className="Talent" onClick={() => this.talentTooltipFlash()} style={{ fontSize: 12 }}>
                     <img src={talentLogo} style={{ width: 16, height: 16, position: 'relative', top: 3, marginRight: 3 }}/>
-                    {(user && user.info ? user.info.talent : 0).toFixed(2)}
+                    <span>
+                        {(user && user.info ? user.info.talent : 0).toFixed(2)}
+                    </span>
                 </span>
             </Tooltip>
         );
