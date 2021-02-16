@@ -20,6 +20,7 @@ class SettingsPanel extends React.Component {
     };
 
     wipe = () => {
+        return false;
         if (!confirm('Вы уверены?')) return false;
 
         axios.post(`${prefix}/admin/wipe`, {
@@ -54,7 +55,7 @@ class SettingsPanel extends React.Component {
                 </PanelHeader>
 
                 <Div>
-                    <Button mode="destructive" onClick={this.wipe}>Обнулить умникоины пользователей</Button>
+                    <Button mode="destructive" disabled onClick={this.wipe}>Обнулить умникоины пользователей</Button>
                 </Div>
 
                 {this.state.snack}
