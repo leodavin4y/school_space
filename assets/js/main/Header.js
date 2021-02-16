@@ -40,7 +40,8 @@ class Header extends React.Component {
                     Заполнить анкету ученика {<Icon28EditOutline width={18} height={18} style={style}/>}
                 </span>
         );
-
+        const info = user && user.info;
+        const talentAmount = info && user.info.talent > 0 ? user.info.talent.toFixed(2) : 0;
         const talents = (
             <Tooltip
                 mode="light"
@@ -51,7 +52,7 @@ class Header extends React.Component {
                 <span className="Talent" onClick={() => this.talentTooltipFlash()} style={{ fontSize: 12 }}>
                     <img src={talentLogo} style={{ width: 16, height: 16, position: 'relative', top: 3, marginRight: 3 }}/>
                     <span>
-                        {(user && user.info ? user.info.talent : 0).toFixed(2)}
+                        {talentAmount}
                     </span>
                 </span>
             </Tooltip>
