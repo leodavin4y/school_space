@@ -9,14 +9,27 @@
     border-radius: 10px;
     margin-right: 10px;
 }
+
+.ImgCard .ImgCardImg:after {
+    content: '';
+    display: block;
+    padding-top: 100%;
+}
+
 .ImgCard.mobile {
-    width: 300px;
-    height: 300px;
+    width: 100%;
+    max-width: 425px;
+    height: auto;
     float: none;
     clear: both;
     margin: 0 auto 15px auto;
 }
+
 ul {
     display: inline-block;
     margin: 5px 0;
+}
+
+body[scheme="space_gray"] .ProductView a {
+    color: var(--text_primary);
 }
