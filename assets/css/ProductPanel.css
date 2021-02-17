@@ -2,7 +2,6 @@
     width: 300px;
     height: 300px;
     float: left;
-    border-radius: 10px;
     margin-right: 10px;
 }
 
@@ -11,6 +10,7 @@
     background-size: cover;
     background-repeat: no-repeat;
     background-color: var(--background_light);
+    border-radius: 10px;
 }
 
 .ImgCard .ImgCardImg:after {
