@@ -111,10 +111,9 @@ class ProductPanel extends React.Component {
 
                     <div style={{ overflow: 'hidden' }}>
                         {product.photo &&
-                            <div
-                                className={classNames({"ImgCard": true, "mobile": mainStore.isMobile})}
-                                style={{ backgroundImage: 'url(' + prefix + '/upload/products/' + product.photo +')' }}
-                            />
+                            <div className={classNames({"ImgCard": true, "mobile": mainStore.isMobile})}>
+                                <div className="ImgCardImg" style={{ backgroundImage: 'url(' + prefix + '/upload/products/' + product.photo +')' }} />
+                            </div>
                         }
 
                         {product.description &&
