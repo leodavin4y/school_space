@@ -99,9 +99,8 @@ class ShopSection extends React.Component {
 
         return (
             <div className={classNames({ 'Store': true, 'mobile': mainStore.isMobile })}>
-
-                {productsRow.map((row) =>
-                    <div className={'row'}>
+                {productsRow.map((row, index) =>
+                    <div className={'row'} key={index}>
                         {row.map((prod) =>
                             <Item
                                 product={prod}
