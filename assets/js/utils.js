@@ -139,3 +139,8 @@ export function makeCancelable(promise) {
         },
     }
 }
+
+export function brainCoin(amount)
+{
+    return declOfNum(amount, ['умникоин', 'умникоина', 'умникоинов'])
+}

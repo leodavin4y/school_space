@@ -216,21 +216,6 @@ body[scheme="space_gray"] .PageDialog {
 .ProductView button {
     cursor: pointer !important;
 }
-.History__item {
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    margin-bottom: 15px;
-    padding: 20px 15px;
-    overflow: hidden;
-}
-.History__photo {
-    width: 50px;
-    float: left;
-}
-.History__info {
-    width: calc(100% - 50px);
-    float: left;
-}
 /**/
 body[scheme="space_gray"] .PromoCard {
     background: var(--modal_card_background);
