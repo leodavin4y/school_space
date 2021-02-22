@@ -13,6 +13,8 @@ import axios from "axios";
 import Popup from '../components/popup/popup';
 import DiamondBrainCoin from '../components/DiamondBrainCoin/DiamondBrainCoin';
 
+moment.tz.setDefault("Europe/Moscow");
+
 /**
  * Текст после покупки (В админке в разделе промокодов у товара)
  *
@@ -37,10 +39,13 @@ const PurchaseMsg = ({ user, product, promo }) => {
 @inject("mainStore")
 @observer
 class HistorySection extends React.Component {
+
     constructor(props) {
         super(props);
 
+        this.scrollLocked = false;
         this.state = {
+            page: 1,
             history: [],
             selectedItem: null
         };
@@ -58,30 +63,55 @@ class HistorySection extends React.Component {
         })
     };
 
-    fetch = ({mainStore} = this.props) => {
-        if (this.state.history.length > 0) return false;
-
-        this.props.spinner(true);
+    fetch = ({ mainStore, spinner } = this.props) => {
+        const {page, history} = this.state;
         const userId = mainStore.user.info.user_id;
 
+        spinner(true);
         axios.post(`${prefix}/api/history/${userId}/get`, {
+            page: page,
             auth: mainStore.auth,
-        }).then(r => {
-            const {status, data} = r.data;
-
-            if (!status) throw new Error('Failed to fetch history');
-
-            this.setState({ history: data })
-        }).catch(e => {
-
-        }).finally(() => {
-            this.props.spinner(false);
         })
+            .then(r => {
+                const {status, data} = r.data;
+                if (!status) throw new Error('Failed to fetch history');
+
+                this.setState({
+                    history: [...history, ...data]
+                })
+            })
+            .catch(e => {})
+            .finally(() => {
+                spinner(false);
+                this.scrollLocked = false;
+            })
+    };
+
+    docBottomIsReached = () => {
+        return document.body.offsetHeight + window.pageYOffset >= document.body.scrollHeight - 100;
+    };
+
+    scrollHandler = () => {
+        if (!this.scrollLocked && this.docBottomIsReached()) {
+            this.setState((state) => {
+                return {
+                    page: state.page + 1
+                };
+            }, () => {
+                this.scrollLocked = true;
+                this.fetch();
+            });
+        }
     };
 
     componentDidMount() {
-        moment.tz.setDefault("Europe/Moscow");
         this.fetch();
+
+        window.addEventListener('scroll', this.scrollHandler);
+    }
+
+    componentWillUnmount() {
+        window.removeEventListener('scroll', this.scrollHandler);
     }
 
     render() {
