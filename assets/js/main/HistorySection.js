@@ -21,18 +21,22 @@ moment.tz.setDefault("Europe/Moscow");
  * @param user
  * @param product
  * @param promo
- * @returns {string}
+ * @returns {*}
  * @constructor
  */
 const PurchaseMsg = ({ user, product, promo }) => {
     let text = promo.msg;
+
+    if (!text) return null;
 
     text = text.replace(/%имя%/ig, user.first_name);
     text = text.replace(/%фамилия%/ig, user.last_name);
     text = text.replace(/%промокод%/ig, promo.code);
 
     return (
-        <Div>{text}</Div>
+        <Div style={{ paddingBottom: 0 }}>
+            <Text weight="regular">{text}</Text>
+        </Div>
     );
 };
 
@@ -178,19 +182,19 @@ class HistorySection extends React.Component {
                         </div>
 
                         {selectedItem.promo_code &&
-                            <Text weight="regular">
-                                <PurchaseMsg
-                                    user={store.userProfile}
-                                    product={selectedItem.product}
-                                    promo={selectedItem.promo_code}
-                                />
+                            <PurchaseMsg
+                                user={store.userProfile}
+                                product={selectedItem.product}
+                                promo={selectedItem.promo_code}
+                            />
+                        }
 
-                                {!selectedItem.completed &&
-                                    <div>
-                                        Администратор в течении 48 часов начислит ваш выигрыш. Ожидайте, пожалуйста!
-                                    </div>
-                                }
-                            </Text>
+                        {!selectedItem.completed &&
+                            <Div style={{ paddingBottom: 0 }}>
+                                <Text weight="regular">
+                                    Администратор в течении 48 часов начислит ваш выигрыш. Ожидайте, пожалуйста!
+                                </Text>
+                            </Div>
                         }
                     </Popup>
                 }
