@@ -390,7 +390,7 @@ class ApiController extends BaseApiController {
         $history = $serializer
             ->convertField('created_at', $converter)
             ->getSerializer()
-            ->normalize($history, 'json', ['groups' => ['History', 'Orders', 'Points', 'Products']]);
+            ->normalize($history, 'json', ['groups' => ['History', 'Orders', 'Points', 'Products', 'Promo']]);
 
         return $this->createResponse($history);
     }

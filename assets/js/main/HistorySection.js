@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-    Avatar,
+    Avatar, Div,
     PanelHeader, PanelHeaderBack, PanelHeaderButton, Text,
     Title, Group, RichCell
 } from '@vkontakte/vkui';
@@ -12,6 +12,27 @@ import 'moment-timezone';
 import axios from "axios";
 import Popup from '../components/popup/popup';
 import DiamondBrainCoin from '../components/DiamondBrainCoin/DiamondBrainCoin';
+
+/**
+ * Текст после покупки (В админке в разделе промокодов у товара)
+ *
+ * @param user
+ * @param product
+ * @param promo
+ * @returns {string}
+ * @constructor
+ */
+const PurchaseMsg = ({ user, product, promo }) => {
+    let text = promo.msg;
+
+    text = text.replace(/%имя%/ig, user.first_name);
+    text = text.replace(/%фамилия%/ig, user.last_name);
+    text = text.replace(/%промокод%/ig, promo.code);
+
+    return (
+        <Div>{text}</Div>
+    );
+};
 
 @inject("mainStore")
 @observer
@@ -126,17 +147,21 @@ class HistorySection extends React.Component {
                             </span>
                         </div>
 
-                        <Text weight="regular" style={{ marginBottom: 16, marginTop: 16 }}>
-                            {store.userProfile.first_name}, вы открыли сундук и в нем вы нашли:<br/>
-                            {selectedItem.product.price} {brainCoin(selectedItem.product.price)}!
-                            {!selectedItem.completed &&
-                                <>
-                                    <br/>
-                                    <br/>
-                                    Администратор в течении 48 часов начислит ваш выигрыш. Ожидайте, пожалуйста!
-                                </>
-                            }
-                        </Text>
+                        {selectedItem.promo_code &&
+                            <Text weight="regular">
+                                <PurchaseMsg
+                                    user={store.userProfile}
+                                    product={selectedItem.product}
+                                    promo={selectedItem.promo_code}
+                                />
+
+                                {!selectedItem.completed &&
+                                    <div>
+                                        Администратор в течении 48 часов начислит ваш выигрыш. Ожидайте, пожалуйста!
+                                    </div>
+                                }
+                            </Text>
+                        }
                     </Popup>
                 }
             </>

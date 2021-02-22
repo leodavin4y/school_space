@@ -1,17 +1,10 @@
 import React from 'react';
 import {
-    Button,
-    FormLayout,
-    Input,
-    Textarea,
-    File,
-    Div,
-    FormLayoutGroup, Snackbar, PanelHeaderButton,
-    PanelHeaderBack, PanelHeader, Checkbox, Cell, List, Avatar, RichCell,
-    Headline, Group, Header
+    Button, FormLayout, Input, Div,
+    Snackbar, PanelHeaderButton, PanelHeaderBack,
+    PanelHeader, List, RichCell, Headline, Group, Header
 } from "@vkontakte/vkui";
 import {Notify} from '@happysanta/vk-app-ui';
-import {Icon24Camera} from '@vkontakte/icons';
 import {inject, observer} from "mobx-react";
 import axios from 'axios';
 import PropTypes from 'prop-types';
@@ -20,12 +13,13 @@ import PropTypes from 'prop-types';
 @observer
 class ProductPromoCodesPanel extends React.Component {
 
-    constructor(props){
+    constructor(props) {
         super(props);
 
         this.state = {
             promos: [],
             code: '',
+            msg: '%имя%, ты открыл ... Выпал %промокод%',
             snack: null
         };
     }
@@ -82,29 +76,33 @@ class ProductPromoCodesPanel extends React.Component {
     };
 
     store = (e, {product} = this.props) => {
-        axios.post(`${prefix}/admin/products/${product.id}/promo-codes/store`, {
+        const params = {
             code: this.state.code,
+            msg: this.state.msg,
             auth: this.props.mainStore.auth
-        }).then(r => {
-            const result = r.data;
+        };
 
-            if (!result.status) throw new Error('Promo code store failed');
+        axios.post(`${prefix}/admin/products/${product.id}/promo-codes/store`, params)
+            .then(({ data }) => {
+                if (!data.status) throw new Error('Promo code store failed');
 
-            this.setState({
-                code: '',
-                promos: [...this.state.promos, result.data.promo]
-            });
+                this.setState({
+                    code: '',
+                    promos: [...this.state.promos, data.data.promo]
+                });
 
-            this.snack('Промокод успешно сохранен');
-        }).catch(e => {
-            this.snack('Произошла ошибка');
-        })
+                this.snack('Промокод успешно сохранен');
+            }).catch(e => {
+                this.snack('Произошла ошибка');
+            })
     };
 
     code = (e) => {
-        this.setState({
-            code: e.target.value,
-        })
+        this.setState({ code: e.target.value })
+    };
+
+    msg = (e) => {
+        this.setState({ msg: e.target.value })
     };
 
     componentDidMount() {
@@ -140,6 +138,14 @@ class ProductPromoCodesPanel extends React.Component {
                         onChange={this.code}
                     />
 
+                    <Input
+                        type="text"
+                        top="Сообщение после покупки"
+                        placeholder="%имя%, ты открыл ... Выпал %промокод%"
+                        value={this.state.msg}
+                        onChange={this.msg}
+                    />
+
                     <Button mode="primary" size="l" onClick={this.store}>Сохранить</Button>
                 </FormLayout>
 
@@ -151,11 +157,7 @@ class ProductPromoCodesPanel extends React.Component {
                                 after={
                                     <Button
                                         mode="secondary"
-                                        onClick={
-                                            () => {
-                                                this.remove(promo)
-                                            }
-                                        }
+                                        onClick={() => { this.remove(promo) }}
                                     >
                                         Удалить
                                     </Button>

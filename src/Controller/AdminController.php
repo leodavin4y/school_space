@@ -780,6 +780,14 @@ class AdminController extends BaseApiController {
                         'max' => 32
                     ])
                 ],
+                'msg' => [
+                    new Assert\Optional(),
+                    new Assert\Type('string'),
+                    new Assert\Length([
+                        'min' => 5,
+                        'max' => 255
+                    ])
+                ]
             ],
             'allowExtraFields' => true
         ]);
@@ -793,7 +801,8 @@ class AdminController extends BaseApiController {
 
         $promo = (new PromoCodes())
             ->setProduct($product)
-            ->setCode($params['code']);
+            ->setCode($params['code'])
+            ->setMsg($params['code'] ?? null);
 
         $product->setPromoCount(intval($product->getPromoCount()) + 1);
 

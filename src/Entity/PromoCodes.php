@@ -26,6 +26,12 @@ class PromoCodes
     private $code;
 
     /**
+     * @ORM\Column(type="string", length=255, nullable=true)
+     * @Groups({"Promo"})
+     */
+    private $msg;
+
+    /**
      * @ORM\ManyToOne(targetEntity=Products::class, inversedBy="promoCodes")
      * @ORM\JoinColumn(nullable=false)
      * @Groups({"Promo"})
@@ -75,6 +81,18 @@ class PromoCodes
     public function setUsed(bool $used): self
     {
         $this->used = $used;
+
+        return $this;
+    }
+
+    public function getMsg()
+    {
+        return $this->msg;
+    }
+
+    public function setMsg($msg): self
+    {
+        $this->msg = $msg;
 
         return $this;
     }
