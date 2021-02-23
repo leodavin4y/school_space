@@ -66,7 +66,7 @@ class Header extends React.Component {
                         before={<Avatar size={48} src={userProfile.photo_100 ? userProfile.photo_100 : 'https://vk.com/images/camera_50.png?ava=1'}/>}
                         caption={school}
                     >
-                        {userProfile.first_name} {userProfile.last_name} {talents}
+                        {userProfile.first_name} {talents}
                         {this.props.isAdmin &&
                             <Link to={`${prefix}/admin/login`} className="Link" style={{ padding: '0 5px', fontSize: '0.75rem' }}>
                                 Admin
