@@ -186,6 +186,6 @@ class VKAPI {
             'access_token' => $_ENV['WIDGET_TOKEN']
         ]);
 
-        return boolval($update->response);
+        return $update->response === 1;
     }
 }
