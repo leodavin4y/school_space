@@ -16,6 +16,7 @@ use App\Repository\ProductsRepository;
 use App\Repository\OrdersRepository;
 use App\Entity\History;
 use App\Entity\Orders;
+use App\Entity\PurchaseError;
 
 class ProductsController extends BaseApiController {
 
@@ -94,7 +95,10 @@ class ProductsController extends BaseApiController {
 
         if (!$product) throw new HttpException(422, 'Product not found');
 
-        if ($product->getRemaining() <= 0) {
+        $promoExist = $product->getPromoCount() && $product->getPromoCount() > 0;
+        $promoCodes = $promoExist ? $product->getUnusedPromoCodes() : [];
+
+        if ($product->getRemaining() <= 0 || ($promoExist && count($promoCodes) === 0)) {
             return $this->createResponse(['msg' => 'Нет в наличии'], false);
         }
 
@@ -133,43 +137,57 @@ class ProductsController extends BaseApiController {
         $connect->beginTransaction();
 
         try {
-            $user->setBalance($user->getBalance() - $product->getPrice());
-            $sendToApi = Letscover::subBalance($user->getUserId(), $product->getPrice());
+            try {
+                // Сняли стоимость товара с баланса пользователя в нашей БД
+                $user->setBalance($user->getBalance() - $product->getPrice());
 
-            if (!$sendToApi) throw new \Exception('Failed to set letscover balance');
+                $product->setRemaining($product->getRemaining() - 1);
+                $order = (new Orders())
+                    ->setUser($user)
+                    ->setProduct($product)
+                    ->setCreatedAt(new \DateTime());
 
-            $product->setRemaining($product->getRemaining() - 1);
-            $order = (new Orders())
-                ->setUser($user)
-                ->setProduct($product)
-                ->setCreatedAt(new \DateTime());
+                if ($promoExist) {
+                    $promoCode = $promoCodes[mt_rand(0, count($promoCodes) - 1)];
+                    $promoCode->setUsed(true);
+                    $order->setPromoCode($promoCode);
+                    $product->setPromoCount($product->getPromoCount() - 1);
+                    $em->persist($promoCode);
+                }
 
-            if ($product->getPromoCount()) {
-                if (count($promoCodes = $product->getUnusedPromoCodes()) === 0) throw new \Exception('Promo codes not found', 100);
+                $history = (new History())
+                    ->setOrders($order)
+                    ->setUser($user);
 
-                $promoCode = $promoCodes[mt_rand(0, count($promoCodes) - 1)];
-                $promoCode->setUsed(true);
-                $order->setPromoCode($promoCode);
-                $product->setPromoCount($product->getPromoCount() - 1);
-                $em->persist($promoCode);
+                $em->persist($user);
+                $em->persist($product);
+                $em->persist($order);
+                $em->persist($history);
+            } catch (\Exception $e) {
+                throw new \Exception($e->getMessage(), 1);
             }
 
-            $history = (new History())
-                ->setOrders($order)
-                ->setUser($user);
-
-            $em->persist($user);
-            $em->persist($product);
-            $em->persist($order);
-            $em->persist($history);
+            // Сняли стоимость товара с баланса пользователя в БД let'scover
+            $sendToApi = Letscover::subBalance($user->getUserId(), $product->getPrice());
+            if (!$sendToApi) throw new \Exception('Failed to set letscover balance', 2);
 
             $em->flush();
             $connect->commit();
         } catch (\Exception $e) {
             $connect->rollback();
 
-            if ($e->getCode() === 100) {
-                return $this->createResponse(['msg' => 'Нет в наличии'], false);
+            // Произошла ошибка ПОСЛЕ изменения баланса let's cover - надо вернуть баланс let's cover
+            if ($e->getCode() !== 1) {
+                $sendToApi = Letscover::addBalance($user->getUserId(), $product->getPrice());
+
+                if (!$sendToApi) {
+                    $error = (new PurchaseError())
+                        ->setUser($user)
+                        ->setProduct($product);
+
+                    $em->persist($error);
+                    $em->flush();
+                }
             }
 
             throw $e;
