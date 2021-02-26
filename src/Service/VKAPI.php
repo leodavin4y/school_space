@@ -56,10 +56,17 @@ class VKAPI {
         curl_setopt($curl, CURLOPT_POSTFIELDS, http_build_query($param));
 
         $result = curl_exec($curl);
+        $statusCode = curl_getinfo($curl, CURLINFO_RESPONSE_CODE);
 
         curl_close($curl);
 
-        return json_decode($result);
+        if (!$statusCode) throw new \Exception('VK API return status code: ' . $statusCode);
+
+        $result = json_decode($result);
+
+        if (isset($result->error)) throw new \Exception($result->error->error_msg, $result->error->error_code);
+
+        return $result;
     }
 
     /**
@@ -169,5 +176,16 @@ class VKAPI {
         $save = self::saveMessagesPhoto($upload->photo, $upload->server, $upload->hash);
 
         return "photo{$save->owner_id}_{$save->id}";
+    }
+
+    public static function widgetUpdate(string $type, string $code): bool
+    {
+        $update = self::method('appWidgets.update', [
+            'type' => $type,
+            'code' => $code,
+            'access_token' => $_ENV['WIDGET_TOKEN']
+        ]);
+
+        return boolval($update->response);
     }
 }

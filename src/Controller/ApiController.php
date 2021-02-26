@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Service\Widget;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Routing\Annotation\Route;
@@ -422,6 +423,20 @@ class ApiController extends BaseApiController {
         return $this->createResponse([
             'subscribers' => $subscribers,
             'moderators' => $moderators
+        ]);
+    }
+
+    /**
+     * @Route("/api/widget", methods={"POST"}, name="api_widget")
+     *
+     * @param Widget $widget
+     * @return JsonResponse
+     */
+    public function buildWidget(Widget $widget): JsonResponse
+    {
+        return $this->createResponse([
+            'type' => 'tiles',
+            'code' => $widget->build()
         ]);
     }
 }

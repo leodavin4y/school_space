@@ -14,6 +14,8 @@ class main {
 
     @observable userProfile = null;
 
+    @observable authParsed = null;
+
     @action setIsMobile = (isMobile) => {
         this.isMobile = isMobile;
     };
@@ -28,6 +30,10 @@ class main {
 
     @action setUser = user => {
         this.user = user;
+    };
+    
+    @action setAuthParsed = data => {
+        this.authParsed = data;
     };
 }
 

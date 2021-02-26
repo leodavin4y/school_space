@@ -129,6 +129,7 @@ class App extends React.Component {
         this.auth = JSON.stringify(auth);
         props.mainStore.setIsMobile(this.mobile);
         props.mainStore.setAuth(this.auth);
+        props.mainStore.setAuthParsed(auth);
         this.appMinified = false;
         this.state = {
             scheme: 'bright_light',

@@ -139,4 +139,15 @@ class UsersRepository extends ServiceEntityRepository
     {
         $this->matching(Criteria::create()->andWhere(Criteria::expr()->eq('ban', false)))->count();
     }
+
+    public function getTop($count = 3): array
+    {
+        return $this->createQueryBuilder('u')
+            ->select('u')
+            ->where('u.ban = 0')
+            ->orderBy('u.balance', 'DESC')
+            ->getQuery()
+            ->setMaxResults($count)
+            ->getResult();
+    }
 }
