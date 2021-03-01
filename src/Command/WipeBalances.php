@@ -54,7 +54,7 @@ class WipeBalances extends Command
             if (count($letscoverUsers) > 0) {
                 // Обнулили баллы всех пользователей в базе letscover
                 foreach ($letscoverUsers as $user) {
-                    Letscover::subBalance($user->userId, $user->points);
+                    if (!Letscover::subBalance($user->userId, $user->points)) throw new \Exception('Failed to sub let\'scover');
                 }
             }
 
