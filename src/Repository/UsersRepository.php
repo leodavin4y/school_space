@@ -131,8 +131,7 @@ class UsersRepository extends ServiceEntityRepository
             ->getQuery()
             ->setFirstResult($offset) // set the offset
             ->setMaxResults($itemPerPage) // set the limit
-            ->getSQL();
-            //->getResult();
+            ->getResult();
     }
 
     public function getUsersCount()

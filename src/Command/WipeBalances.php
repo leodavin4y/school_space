@@ -75,13 +75,15 @@ class WipeBalances extends Command
                 foreach ($users as $index => $user) {
                     $talents = round($user->getBalance() / 50, 2);
 
-                    VKAPI::method('messages.send', [
-                        'user_id' => $user->getUserId(),
-                        'random_id' => time() + $index,
-                        'message' => "Умникоины переплавлены в таланты!\nТалантов получено: +{$talents}",
-                        'access_token' => $_ENV['GROUP_TOKEN'],
-                        'v' => 5.124
-                    ]);
+                    try {
+                        VKAPI::method('messages.send', [
+                            'user_id' => $user->getUserId(),
+                            'random_id' => time() + $index,
+                            'message' => "Умникоины переплавлены в таланты!\nТалантов получено: +{$talents}",
+                            'access_token' => $_ENV['GROUP_TOKEN'],
+                            'v' => 5.124
+                        ]);
+                    } catch (\Exception $e) {}
                 }
 
                 if (count($users) < $limit) break;
