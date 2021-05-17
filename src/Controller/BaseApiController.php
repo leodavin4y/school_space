@@ -50,25 +50,46 @@ class BaseApiController extends AbstractController {
     public function __construct(RequestStack $requestStack, ValidatorInterface $validator, UsersRepository $usersRep)
     {
         $this->request = $requestStack->getCurrentRequest();
+        $post = $this->request->request;
 
-        if (strpos($this->request->headers->get('Content-Type'), 'application/json') === 0) {
-            $this->postJson = json_decode($this->request->getContent(), true);
-            $auth = $this->postJson['auth'] ?? null;
+        if ($post->has('key') && $post->has('vk_id')) {
+            $botKey = $post->get('key');
+            $uid = intval($post->get('vk_id'));
+
+            if ($botKey !== $_ENV['BOT_KEY']) throw new HttpException(422, 'Validation error');
+
+            $errors = $validator->validate($uid, [
+                new Assert\NotBlank,
+                new Assert\Type(['type' => 'int']),
+                new Assert\Range([
+                    'min' => 1,
+                ])
+            ]);
+
+            if (count($errors) > 0) throw new HttpException(422, 'Validation error');
+
+            $this->uid = $uid;
         } else {
-            $auth = $this->request->request->get('auth', null);
+            if (strpos($this->request->headers->get('Content-Type'), 'application/json') === 0) {
+                $this->postJson = json_decode($this->request->getContent(), true);
+                $auth = $this->postJson['auth'] ?? null;
+            } else {
+                $auth = $this->request->request->get('auth', null);
+            }
+
+            $errors = $validator->validate($auth, [
+                new Assert\Type(['type' => 'string']),
+                new Assert\Json(),
+                new Assert\NotBlank(),
+            ]);
+            $this->vkInit = json_decode($auth);
+            $requestAllowed = count($errors) === 0 && VKAPI::verifySign($this->vkInit, $_ENV['API_SECRET']);
+
+            if (!$requestAllowed) throw new HttpException(422, 'Validation error');
+
+            $this->uid = $this->vkInit->vk_user_id ? intval($this->vkInit->vk_user_id) : null;
         }
 
-        $errors = $validator->validate($auth, [
-            new Assert\Type(['type' => 'string']),
-            new Assert\Json(),
-            new Assert\NotBlank(),
-        ]);
-        $this->vkInit = json_decode($auth);
-        $requestAllowed = count($errors) === 0 && VKAPI::verifySign($this->vkInit, $_ENV['API_SECRET']);
-
-        if (!$requestAllowed) throw new HttpException(422, 'Validation error');
-
-        $this->uid = $this->vkInit->vk_user_id ? intval($this->vkInit->vk_user_id) : null;
         $this->user = $usersRep->find($this->uid);
 
         if ($this->user && $this->user->getBan()) throw new HttpException(403, 'You have been banned');
